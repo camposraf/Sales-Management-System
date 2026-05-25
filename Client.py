@@ -78,7 +78,7 @@ DASHBOARD_LAYOUT = [[sg.Text("Sales Management System", font=("Helvetica", 20), 
 
         [sg.Text("", size=(1,1))],
 
-        [sg.Button("Manage Payments", font=("Helvetica", 20), size=(20, 1)), sg.Button("Reports", font=("Helvetica", 20), size=(20, 1)), sg.Button("Exit", font=("Helvetica", 20), size=(20, 1))]
+        [sg.Button("Manage Payments", font=("Helvetica", 20), size=(20, 1)), sg.Button("Reports", font=("Helvetica", 20), size=(20, 1)), sg.Button("Logout", font=("Helvetica", 20), size=(20, 1))]
         ]
 
 LOGIN_LAYOUT = [
@@ -90,14 +90,35 @@ LOGIN_LAYOUT = [
 
         [sg.Text("", size=(1,1))],
 
-        [sg.Button("Login", font=("Helvetica", 20), size=(20, 1))]
+        [sg.Button("Login", font=("Helvetica", 20), size=(20, 1))],
+
+        [sg.Button("Register", font=("Helvetica", 20), size=(20, 1))],
+
+        [sg.Button("Exit", font=("Helvetica", 20), size=(20, 1))]
+
     ]
+REGISTRATION_LAYOUT = [
+        [sg.Text("Sales Management System", font=("Helvetica", 20), justification="center")],
+        [sg.Text("", size=(5,5))],
+
+        [sg.Text("Username:", font=("Helvetica", 20)), sg.Input(key="username", font=("Helvetica", 20), size=(20, 1))],
+        [sg.Text("Password:", font=("Helvetica", 20)), sg.Input(key="password", password_char="*", font=("Helvetica", 20), size=(20, 1))],
+
+        [sg.Text("", size=(1,1))],
+
+        [sg.Button("Register", font=("Helvetica", 20), size=(20, 1))]
+]
 
 # Database Setup
 def init_db():
     conn = sqlite3.connect("primaris.db")
     c = conn.cursor()
 
+    #Registration for users
+    c.execute("""CREATE TABLE IF NOT EXISTS users(id INTEGER PRIMARY KEY AUTOINCREMENT,
+              username TEXT UNIQUE,
+              password TEXT,
+              first_login INTEGER DEFAULT 1)""")
     # Employees
     c.execute("""CREATE TABLE IF NOT EXISTS employees(id INTEGER PRIMARY KEY AUTOINCREMENT, 
               username TEXT UNIQUE,
@@ -106,8 +127,8 @@ def init_db():
     # Clients
     c.execute("""CREATE TABLE IF NOT EXISTS clients(id INTEGER PRIMARY KEY AUTOINCREMENT,
               name TEXT,
-              contact TEXT
-              email TEXT
+              contact TEXT,
+              email TEXT,
               address TEXT)""")
     # Properties
     c.execute("""CREATE TABLE IF NOT EXISTS properties(id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -142,6 +163,30 @@ def login(username, password):
     result = c.fetchone()
     conn.close()
     return result
+
+# Registration Window
+def register_window():
+    window = sg.Window("Register", REGISTRATION_LAYOUT, resizable=True, element_justification='c')
+
+    while True:
+        event, values = window.read()
+        if event in (sg.WIN_CLOSED,):
+            break
+        if event == "Register":
+            conn = sqlite3.connect("primaris.db")
+            c = conn.cursor()
+            try:
+                c.execute("INSERT INTO employees (username, password) VALUES (?, ?)",
+                          (values["username"], hash_password(values["password"])))
+                conn.commit()
+                sg.popup("Registration successful! Please log in.")
+                window.close()
+                break
+            except sqlite3.IntegrityError:
+                sg.popup("Username already exists. Please choose a different username.")
+            finally:
+                conn.close()
+    window.close()
 
 # Client Window
 def client_window():
@@ -266,17 +311,28 @@ def login_window():
 
     while True:
         event, values = window.read()
-        if event in (sg.WIN_CLOSED,):
+        if event in (sg.WIN_CLOSED, "Exit"):
             break
+        if event == "Register":
+            register_window()
         if event == "Login":
             user = login(values["username"], values["password"])
             if user:
-                sg.popup("Login successful!")
-                window.close()
-                break
+                conn = sqlite3.connect("primaris.db")
+                c = conn.cursor()
+                # first_login column
+                if user[3] == 1:  
+                    sg.popup("Welcome! This is your first login.")
+                    c.execute("UPDATE employees SET first_login=0 WHERE id=?", (user[0],))
+                    conn.commit()
+                else:
+                    sg.popup("Welcome back!")
+                conn.close()
+                # pass user info into dashboard
+                dashboard()   
             else:
-                sg.popup("Invalid username or password. Please try again.")
-                
+                sg.popup("Invalid credentials")
+
     window.close()
 
 # Dashboard Window
@@ -284,18 +340,16 @@ def dashboard():
     window = sg.Window("Sales Management System", DASHBOARD_LAYOUT, resizable=True, element_justification='l')
     while True:
         event, _ = window.read()
-        if event in (sg.WIN_CLOSED, "Exit"):
+        if event in (sg.WIN_CLOSED, "Logout"):
             break
-        elif event == "Login":
-            login_window()
         elif event == "Manage Clients":
-            client_window()
+                client_window()
         elif event == "Manage Properties":
-            property_window()
-        elif event == "Manage Payments":
-            payments_window()
+                property_window()
+        elif event  == "Manage Payments":
+                payments_window()
         elif event == "Reports":
-            reports_window()
+                reports_window()
 
     window.close()
 
