@@ -3,7 +3,7 @@ import PySimpleGUI as sg
 import hashlib
 
 #Layout Setup
-
+sg.theme("DarkBlue")
 CLIENT_LAYOUT = [[sg.Text("Sales Management System", font=("Helvetica", 20), justification="center")],
         # Spacer row
         [sg.Text("", size=(5,5))],
