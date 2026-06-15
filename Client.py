@@ -34,13 +34,13 @@ def create_property_layout():
     return [
         [sg.Text("Sales Management System", font=("Helvetica", 20), justification="center")],
         [sg.Text("", size=(5,5))],
-        [sg.Text("Client ID", font=("Helvetica", 20)), sg.Input(key="client_id", font=("Helvetica", 20), size=(20, 1)),
+        [sg.Text("Property ID", font=("Helvetica", 20)), sg.Input(key="client_id", font=("Helvetica", 20), size=(20, 1)),
         sg.Text("Location", font=("Helvetica", 20)), sg.Input(key="location", font=("Helvetica", 20), size=(20, 1))],
         [sg.Text("", size=(1,1))],
         [sg.Text("Price", font=("Helvetica", 20)), sg.Input(key="price", font=("Helvetica", 20), size=(20, 1)),
         sg.Text("Status", font=("Helvetica", 20)), sg.Input(key="status", font=("Helvetica", 20), size=(20, 1))],
         [sg.Text("", size=(1,1))],
-        [sg.Button("Add Payment", font=("Helvetica", 20), size=(12,1)), sg.Button("View Properties", font=("Helvetica", 20), size=(12,1)), sg.Button("Back", font=("Helvetica", 20), size=(12,1))]
+        [sg.Button("Add Property", font=("Helvetica", 20), size=(12,1)), sg.Button("View Properties", font=("Helvetica", 20), size=(12,1)), sg.Button("Back", font=("Helvetica", 20), size=(12,1))]
         ]
 
 def create_payments_layout():
@@ -182,24 +182,24 @@ def client_window():
 
     while True:
         event, values = window.read()
+
         if event in (sg.WIN_CLOSED, "Back"):
          break
-
-    if event == "Add Client":
-        conn = sqlite3.connect("primaris.db")
-        c = conn.cursor()
-        c.execute("""INSERT INTO clients (name, contact, email, address) VALUES (?, ?, ?, ?)""", (values["name"], values["contact"], values["email"], values["address"]))
-        conn.commit()
-        conn.close()
-        sg.popup("Client added successfully!")
-
-    if event == "View Clients":
-        conn = sqlite3.connect("primaris.db")
-        c = conn.cursor()
-        c.execute("SELECT * FROM clients")
-        rows = c.fetchall()
-        conn.close()
-        sg.popup_scrolled("Clients List", *[str(r) for r in rows])
+        elif event == "Add Client":
+            conn = sqlite3.connect("primaris.db")
+            c = conn.cursor()
+            c.execute("""INSERT INTO clients (name, contact, email, address) VALUES (?, ?, ?, ?)""", (values["name"], values["contact"], values["email"], values["address"]))
+            conn.commit()
+            conn.close()
+            sg.popup("Client added successfully!")
+            
+        elif event == "View Clients":
+            conn = sqlite3.connect("primaris.db")
+            c = conn.cursor()
+            c.execute("SELECT * FROM clients")
+            rows = c.fetchall()
+            conn.close()
+            sg.popup_scrolled("Clients List", *[str(r) for r in rows])
 
     window.close()
 
@@ -212,23 +212,23 @@ def property_window():
         if event in (sg.WIN_CLOSED, "Back"):
             break
 
-        if event == "Add Payment":
+        elif event == "Add Property":
             conn = sqlite3.connect("primaris.db")
             c = conn.cursor()
-            c.execute("""INSERT INTO payments (client_id, property_id, amount, date, status)
-                         VALUES (?, ?, ?, ?, ?)""",
-                      (values["client_id"], values["property_id"], values["amount"], values["date"], values["status"]))
+            c.execute("""INSERT INTO properties (name, location, price, status)
+                         VALUES (?, ?, ?, ?)""",
+                      (values["name"], values["location"], values["price"], values["status"]))
             conn.commit()
             conn.close()
-            sg.popup("Payment recorded successfully!")
+            sg.popup("Property added successfully!")
 
-        if event == "View Payments":
+        elif event == "View Properties":
             conn = sqlite3.connect("primaris.db")
             c = conn.cursor()
-            c.execute("SELECT * FROM payments")
+            c.execute("SELECT * FROM properties")
             rows = c.fetchall()
             conn.close()
-            sg.popup_scrolled("Payments List", *[str(r) for r in rows])
+            sg.popup_scrolled("Properties List", *[str(r) for r in rows])
 
     window.close()
 
@@ -240,7 +240,7 @@ def payments_window():
         event, values = window.read()
         if event in (sg.WIN_CLOSED, "Back"):
             break
-        if event == "Add Payment":
+        elif event == "Add Payment":
             conn = sqlite3.connect("primaris.db")
             c = conn.cursor()
             c.execute("INSERT INTO payments (client_id, property_id, amount, status) VALUES (?, ?, ?, ?)",
@@ -248,7 +248,8 @@ def payments_window():
             conn.commit()
             conn.close()
             sg.popup("Payment added successfully!")
-        if event == "View Payments":
+
+        elif event == "View Payments":
             conn = sqlite3.connect("primaris.db")
             c = conn.cursor()
             c.execute("SELECT * FROM payments")
@@ -266,7 +267,7 @@ def reports_window():
         event, values = window.read()
         if event in (sg.WIN_CLOSED, "Back"):
             break
-        if event == "Generate Report":
+        elif event == "Generate Report":
             conn = sqlite3.connect("primaris.db")
             c = conn.cursor()
             report_type = values["report_type"]
@@ -276,7 +277,7 @@ def reports_window():
                 rows = c.fetchall()
                 sg.popup_scrolled("Overdue Payments Report", *[str(r) for r in rows])
 
-            elif report_type == "Payments by Client":
+        elif report_type == "Payments by Client":
                 c.execute("""SELECT clients.name, SUM(payments.amount)
                              FROM payments
                              JOIN clients ON payments.client_id = clients.id
@@ -284,7 +285,7 @@ def reports_window():
                 rows = c.fetchall()
                 sg.popup_scrolled("Payments by Client", *[f"{r[0]}: ₱{r[1]}" for r in rows])
 
-            elif report_type == "Payments by Property":
+        elif report_type == "Payments by Property":
                 c.execute("""SELECT properties.location, SUM(payments.amount)
                              FROM payments
                              JOIN properties ON payments.property_id = properties.id
@@ -292,7 +293,7 @@ def reports_window():
                 rows = c.fetchall()
                 sg.popup_scrolled("Payments by Property", *[f"{r[0]}: ₱{r[1]}" for r in rows])
 
-            conn.close()
+        conn.close()
 
     window.close()
 
