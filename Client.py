@@ -4,7 +4,9 @@ import hashlib
 
 #Layout Setup
 sg.theme("DarkBlue")
-CLIENT_LAYOUT = [[sg.Text("Sales Management System", font=("Helvetica", 20), justification="center")],
+def create_client_layout():
+    return [
+        [sg.Text("Sales Management System", font=("Helvetica", 20), justification="center")],
         # Spacer row
         [sg.Text("", size=(5,5))],
 
@@ -25,89 +27,75 @@ CLIENT_LAYOUT = [[sg.Text("Sales Management System", font=("Helvetica", 20), jus
         # Buttons row
         [sg.Button("Add Client", font=("Helvetica", 20), size=(12,1)),
          sg.Button("View Clients", font=("Helvetica", 20), size=(12,1)),
-         sg.Button("Back", font=("Helvetica", 20), size=(12,1))]]
+         sg.Button("Back", font=("Helvetica", 20), size=(12,1))]
+         ]
 
-PROPERTY_LAYOUT = [    [sg.Text("Sales Management System", font=("Helvetica", 20), justification="center")],
+def create_property_layout():
+    return [
+        [sg.Text("Sales Management System", font=("Helvetica", 20), justification="center")],
         [sg.Text("", size=(5,5))],
-
         [sg.Text("Client ID", font=("Helvetica", 20)), sg.Input(key="client_id", font=("Helvetica", 20), size=(20, 1)),
         sg.Text("Location", font=("Helvetica", 20)), sg.Input(key="location", font=("Helvetica", 20), size=(20, 1))],
-
         [sg.Text("", size=(1,1))],
-
         [sg.Text("Price", font=("Helvetica", 20)), sg.Input(key="price", font=("Helvetica", 20), size=(20, 1)),
         sg.Text("Status", font=("Helvetica", 20)), sg.Input(key="status", font=("Helvetica", 20), size=(20, 1))],
-
         [sg.Text("", size=(1,1))],
-
-        [sg.Button("Add Payment"), sg.Button("View Properties"), sg.Button("Back")]]
-
-PAYMENTS_LAYOUT = [[sg.Text("Sales Management System", font=("Helvetica", 20), justification="center")],
-        [sg.Text("", size=(5,5))],
-
-        [sg.Text("Client ID", font=("Helvetica", 20)), sg.Input(key="client_id", font=("Helvetica", 20), size=(20, 1)),
-         sg.Text("Property ID", font=("Helvetica", 20)), sg.Input(key="property_id", font=("Helvetica", 20), size=(20, 1))],
-
-        [sg.Text("", size=(1,1))],
-
-        [sg.Text("Amount", font=("Helvetica", 20)), sg.Input(key="amount", font=("Helvetica", 20), size=(20, 1)),
-         sg.Text("Date (YYYY-MM-DD)", font=("Helvetica", 20)), sg.Input(key="date", font=("Helvetica", 20), size=(20, 1))],
-
-        [sg.Text("", size=(1,1))],
-
-        [sg.Text("Status"), sg.Combo(["Paid", "Pending", "Overdue"], key="status")],
-
-        [sg.Text("", size=(1,1))],
-
-        [sg.Button("Add Payment"), sg.Button("View Payments"), sg.Button("Back")]]
-
-REPORTS_LAYOUT = [[sg.Text("Sales Management System", font=("Helvetica", 20), justification="center")],
-    [sg.Text("", size=(5,5))],
-
-    [sg.Text("Select Report Type:", font=("Helvetica", 20))],
-    [sg.Combo(["Overdue Payments", "Payments by Client", "Payments by Property"], key="report_type", font=("Helvetica", 20), size=(20, 1))],
-
-    [sg.Text("", size=(1,1))],
-
-    [sg.Button("Generate Report", font=("Helvetica", 20)), sg.Button("Back", font=("Helvetica", 20))]]
-
-DASHBOARD_LAYOUT = [[sg.Text("Sales Management System", font=("Helvetica", 20), justification="center")],
-        [sg.Text("", size=(5,5))],
-
-        [sg.Button("Manage Clients", font=("Helvetica", 20), size=(20, 1)), sg.Button("Manage Properties", font=("Helvetica", 20), size=(20, 1))],
-
-        [sg.Text("", size=(1,1))],
-
-        [sg.Button("Manage Payments", font=("Helvetica", 20), size=(20, 1)), sg.Button("Reports", font=("Helvetica", 20), size=(20, 1)), sg.Button("Logout", font=("Helvetica", 20), size=(20, 1))]
+        [sg.Button("Add Payment", font=("Helvetica", 20), size=(12,1)), sg.Button("View Properties", font=("Helvetica", 20), size=(12,1)), sg.Button("Back", font=("Helvetica", 20), size=(12,1))]
         ]
 
-LOGIN_LAYOUT = [
+def create_payments_layout():
+    return [
         [sg.Text("Sales Management System", font=("Helvetica", 20), justification="center")],
         [sg.Text("", size=(5,5))],
-
-        [sg.Text("Username:", font=("Helvetica", 20)), sg.Input(key="username", font=("Helvetica", 20), size=(20, 1))],
-        [sg.Text("Password:", font=("Helvetica", 20)), sg.Input(key="password", password_char="*", font=("Helvetica", 20), size=(20, 1))],
-
+        [sg.Text("Client ID", font=("Helvetica", 20)), sg.Input(key="client_id", font=("Helvetica", 20), size=(20, 1)),
+         sg.Text("Property ID", font=("Helvetica", 20)), sg.Input(key="property_id", font=("Helvetica", 20), size=(20, 1))],
         [sg.Text("", size=(1,1))],
-
-        [sg.Button("Login", font=("Helvetica", 20), size=(20, 1))],
-
-        [sg.Button("Register", font=("Helvetica", 20), size=(20, 1))],
-
-        [sg.Button("Exit", font=("Helvetica", 20), size=(20, 1))]
-
+        [sg.Text("Amount", font=("Helvetica", 20)), sg.Input(key="amount", font=("Helvetica", 20), size=(20, 1)),
+         sg.Text("Date (YYYY-MM-DD)", font=("Helvetica", 20)), sg.Input(key="date", font=("Helvetica", 20), size=(20, 1))],
+        [sg.Text("", size=(1,1))],
+        [sg.Text("Status"), sg.Combo(["Paid", "Pending", "Overdue"], key="status", font=("Helvetica", 20), size=(20, 1))],
+        [sg.Text("", size=(1,1))],
+        [sg.Button("Add Payment", font=("Helvetica", 20), size=(12,1)), sg.Button("View Payments", font=("Helvetica", 20), size=(12,1)), sg.Button("Back", font=("Helvetica", 20), size=(12,1))]
     ]
-REGISTRATION_LAYOUT = [
+def create_reports_layout():
+    return [
+        [sg.Text("Sales Management System", font=("Helvetica", 20), justification="center")],
+        [sg.Text("", size=(5,5))]
+        [sg.Text("Select Report Type:", font=("Helvetica", 20))],
+        [sg.Combo(["Overdue Payments", "Payments by Client", "Payments by Property"], key="report_type", font=("Helvetica", 20), size=(20, 1))],
+        [sg.Text("", size=(1,1))],
+        [sg.Button("Generate Report", font=("Helvetica", 20)), sg.Button("Back", font=("Helvetica", 20))]
+    ]
+def create_dashboard_layout():
+    return [
         [sg.Text("Sales Management System", font=("Helvetica", 20), justification="center")],
         [sg.Text("", size=(5,5))],
+        [sg.Button("Manage Clients", font=("Helvetica", 20), size=(20, 1)), sg.Button("Manage Properties", font=("Helvetica", 20), size=(20, 1))],
+        [sg.Text("", size=(1,1))],
+        [sg.Button("Manage Payments", font=("Helvetica", 20), size=(20, 1)), sg.Button("Reports", font=("Helvetica", 20), size=(20, 1)), sg.Button("Logout", font=("Helvetica", 20), size=(20, 1))]
+    ]
 
+def create_login_layout():
+    return [
+        [sg.Text("Sales Management System", font=("Helvetica", 20), justification="center")],
+        [sg.Text("", size=(5,5))],
         [sg.Text("Username:", font=("Helvetica", 20)), sg.Input(key="username", font=("Helvetica", 20), size=(20, 1))],
         [sg.Text("Password:", font=("Helvetica", 20)), sg.Input(key="password", password_char="*", font=("Helvetica", 20), size=(20, 1))],
-
         [sg.Text("", size=(1,1))],
+        [sg.Button("Login", font=("Helvetica", 20), size=(20, 1))],
+        [sg.Button("Register", font=("Helvetica", 20), size=(20, 1))],
+        [sg.Button("Exit", font=("Helvetica", 20), size=(20, 1))]
+    ]
 
+def create_registration_layout():
+    return [
+        [sg.Text("Sales Management System", font=("Helvetica", 20), justification="center")],
+        [sg.Text("", size=(5,5))],
+        [sg.Text("Username:", font=("Helvetica", 20)), sg.Input(key="username", font=("Helvetica", 20), size=(20, 1))],
+        [sg.Text("Password:", font=("Helvetica", 20)), sg.Input(key="password", password_char="*", font=("Helvetica", 20), size=(20, 1))],
+        [sg.Text("", size=(1,1))],
         [sg.Button("Register", font=("Helvetica", 20), size=(20, 1))]
-]
+    ]
 
 # Database Setup
 def init_db():
@@ -166,7 +154,7 @@ def login(username, password):
 
 # Registration Window
 def register_window():
-    window = sg.Window("Register", REGISTRATION_LAYOUT, resizable=True, element_justification='c')
+    window = sg.Window("Register", create_registration_layout(), resizable=True, element_justification='c')
 
     while True:
         event, values = window.read()
@@ -190,12 +178,13 @@ def register_window():
 
 # Client Window
 def client_window():
-    window = sg.Window("Client Management", CLIENT_LAYOUT, resizable=True, element_justification='l')
+    window = sg.Window("Client Management", create_client_layout(), resizable=True, element_justification='l')
 
     while True:
         event, values = window.read()
         if event in (sg.WIN_CLOSED, "Back"):
          break
+
     if event == "Add Client":
         conn = sqlite3.connect("primaris.db")
         c = conn.cursor()
@@ -203,9 +192,9 @@ def client_window():
         conn.commit()
         conn.close()
         sg.popup("Client added successfully!")
-    if event == "View Clients":
 
-        conn == sqlite3.connect("primaris.db")
+    if event == "View Clients":
+        conn = sqlite3.connect("primaris.db")
         c = conn.cursor()
         c.execute("SELECT * FROM clients")
         rows = c.fetchall()
@@ -216,14 +205,15 @@ def client_window():
 
 # Property Window
 def property_window():
-    window = sg.Window("Property Management", PROPERTY_LAYOUT, resizable=True, element_justification='l')
+    window = sg.Window("Property Management", create_property_layout(), resizable=True, element_justification='l')
 
     while True:
         event, values = window.read()
         if event in (sg.WIN_CLOSED, "Back"):
             break
+
         if event == "Add Payment":
-            conn = sqlite3.connect("primarius.db")
+            conn = sqlite3.connect("primaris.db")
             c = conn.cursor()
             c.execute("""INSERT INTO payments (client_id, property_id, amount, date, status)
                          VALUES (?, ?, ?, ?, ?)""",
@@ -231,8 +221,9 @@ def property_window():
             conn.commit()
             conn.close()
             sg.popup("Payment recorded successfully!")
+
         if event == "View Payments":
-            conn = sqlite3.connect("primarius.db")
+            conn = sqlite3.connect("primaris.db")
             c = conn.cursor()
             c.execute("SELECT * FROM payments")
             rows = c.fetchall()
@@ -243,14 +234,14 @@ def property_window():
 
 # Payments Window
 def payments_window():
-    window = sg.Window("Payment Management", PAYMENTS_LAYOUT, resizable=True, element_justification='l')
+    window = sg.Window("Payment Management", create_payments_layout(), resizable=True, element_justification='l')
 
     while True:
         event, values = window.read()
         if event in (sg.WIN_CLOSED, "Back"):
             break
         if event == "Add Payment":
-            conn = sqlite3.connect("primarius.db")
+            conn = sqlite3.connect("primaris.db")
             c = conn.cursor()
             c.execute("INSERT INTO payments (client_id, property_id, amount, status) VALUES (?, ?, ?, ?)",
                       (values["client_id"], values["property_id"], values["amount"], values["status"]))
@@ -258,7 +249,7 @@ def payments_window():
             conn.close()
             sg.popup("Payment added successfully!")
         if event == "View Payments":
-            conn = sqlite3.connect("primarius.db")
+            conn = sqlite3.connect("primaris.db")
             c = conn.cursor()
             c.execute("SELECT * FROM payments")
             rows = c.fetchall()
@@ -269,14 +260,14 @@ def payments_window():
 
 #Reports Window
 def reports_window():
-    window = sg.Window("Reports", REPORTS_LAYOUT, resizable=True, element_justification='l')
+    window = sg.Window("Reports", create_reports_layout(), resizable=True, element_justification='l')
 
     while True:
         event, values = window.read()
         if event in (sg.WIN_CLOSED, "Back"):
             break
         if event == "Generate Report":
-            conn = sqlite3.connect("primarius.db")
+            conn = sqlite3.connect("primaris.db")
             c = conn.cursor()
             report_type = values["report_type"]
 
@@ -307,7 +298,7 @@ def reports_window():
 
 # Login Window
 def login_window():
-    window = sg.Window("Login", LOGIN_LAYOUT, resizable=True, element_justification='c')
+    window = sg.Window("Login", create_login_layout(), resizable=True, element_justification='c')
 
     while True:
         event, values = window.read()
@@ -337,7 +328,7 @@ def login_window():
 
 # Dashboard Window
 def dashboard():
-    window = sg.Window("Sales Management System", DASHBOARD_LAYOUT, resizable=True, element_justification='l')
+    window = sg.Window("Sales Management System", create_dashboard_layout(), resizable=True, element_justification='l')
     while True:
         event, _ = window.read()
         if event in (sg.WIN_CLOSED, "Logout"):
