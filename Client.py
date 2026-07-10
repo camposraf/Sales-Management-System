@@ -10,45 +10,45 @@ sg.theme("DarkBlue")
 
 def create_client_layout():
     return [
-        [sg.Text("Sales Management System", font=("Helvetica", 20), justification="center")],
+        [sg.Text("Sales Management System", font=("Tahoma", 20), justification="center")],
         [sg.Text("", size=(2,2))],
         [sg.Column([
-            [sg.Button("Add Client", font=("Helvetica", 20))],
+            [sg.Button("Add Client", button_color=(sg.theme_text_color(), sg.theme_background_color()), border_width=0, font=("Tahoma", 20))],
             [sg.Text("", size=(1,1))],
-            [sg.Button("View Clients", font=("Helvetica", 20))],
+            [sg.Button("View Clients", button_color=(sg.theme_text_color(), sg.theme_background_color()), border_width=0, font=("Tahoma", 20))],
             [sg.Text("", size=(1,1))],
-            [sg.Button("Back", font=("Helvetica", 20))],
+            [sg.Button("Back", button_color=(sg.theme_text_color(), sg.theme_background_color()), border_width=0, font=("Tahoma", 20))],
         ]),
         sg.VerticalSeparator(),
         sg.Column([
-            [sg.Text("Client Name:", font=("Helvetica", 20), size=(16,1)), sg.Input(key="name", font=("Helvetica", 20), size=(20,1))],
-            [sg.Text("Contact:", font=("Helvetica", 20), size=(16,1)), sg.Input(key="contact", font=("Helvetica", 20), size=(20,1))],
-            [sg.Text("Email:", font=("Helvetica", 20), size=(16,1)), sg.Input(key="email", font=("Helvetica", 20), size=(20,1))],
-            [sg.Text("Address:", font=("Helvetica", 20), size=(16,1)), sg.Input(key="address", font=("Helvetica", 20), size=(20,1))],
+            [sg.Text("Client Name:", font=("Tahoma", 20), size=(16,1)), sg.Input(key="name", font=("Tahoma", 20), size=(20,1))],
+            [sg.Text("Contact:", font=("Tahoma", 20), size=(16,1)), sg.Input(key="contact", font=("Tahoma", 20), size=(20,1))],
+            [sg.Text("Email:", font=("Tahoma", 20), size=(16,1)), sg.Input(key="email", font=("Tahoma", 20), size=(20,1))],
+            [sg.Text("Address:", font=("Tahoma", 20), size=(16,1)), sg.Input(key="address", font=("Tahoma", 20), size=(20,1))],
         ])],
     ]
 
 def create_property_layout():
     return [
-        [sg.Text("Sales Management System", font=("Helvetica", 20), justification="center")],
+        [sg.Text("Sales Management System", font=("Tahoma", 20), justification="center")],
         [sg.Text("", size=(2,2))],
         [sg.Column([
-            [sg.Button("Add Property", font=("Helvetica", 20))],
+            [sg.Button("Add Property", button_color=(sg.theme_text_color(), sg.theme_background_color()), border_width=0, font=("Tahoma", 20))],
             [sg.Text("", size=(1,1))],
-            [sg.Button("View Properties", font=("Helvetica", 20))],
+            [sg.Button("View Properties", button_color=(sg.theme_text_color(), sg.theme_background_color()), border_width=0, font=("Tahoma", 20))],
             [sg.Text("", size=(1,1))],
-            [sg.Button("Upload Photo", font=("Helvetica", 20))],
+            [sg.Button("Upload Photo", button_color=(sg.theme_text_color(), sg.theme_background_color()), border_width=0, font=("Tahoma", 20))],
             [sg.Text("", size=(1,1))],
-            [sg.Button("Back", font=("Helvetica", 20))],
+            [sg.Button("Back", button_color=(sg.theme_text_color(), sg.theme_background_color()), border_width=0, font=("Tahoma", 20))],
         ]),
         sg.VerticalSeparator(),
         sg.Column([
-            [sg.Text("Property ID:", font=("Helvetica", 20), size=(14,1)), sg.Input(key="lookup_id", font=("Helvetica", 20), size=(10,1)),
-             sg.Button("Lookup", font=("Helvetica", 20))],
-            [sg.Text("Name:", font=("Helvetica", 20), size=(14,1)), sg.Input(key="name", font=("Helvetica", 20), size=(20,1))],
-            [sg.Text("Location:", font=("Helvetica", 20), size=(14,1)), sg.Input(key="location", font=("Helvetica", 20), size=(20,1))],
-            [sg.Text("Price:", font=("Helvetica", 20), size=(14,1)), sg.Input(key="price", font=("Helvetica", 20), size=(20,1))],
-            [sg.Text("Status:", font=("Helvetica", 20), size=(14,1)), sg.Input(key="status", font=("Helvetica", 20), size=(20,1))],
+            [sg.Text("Property ID:", font=("Tahoma", 20), size=(14,1)), sg.Input(key="lookup_id", font=("Tahoma", 20), size=(10,1)),
+             sg.Button("Lookup", button_color=(sg.theme_text_color(), sg.theme_background_color()), border_width=0, font=("Tahoma", 20))],
+            [sg.Text("Name:", font=("Tahoma", 20), size=(14,1)), sg.Input(key="name", font=("Tahoma", 20), size=(20,1))],
+            [sg.Text("Location:", font=("Tahoma", 20), size=(14,1)), sg.Input(key="location", font=("Tahoma", 20), size=(20,1))],
+            [sg.Text("Price:", font=("Tahoma", 20), size=(14,1)), sg.Input(key="price", font=("Tahoma", 20), size=(20,1))],
+            [sg.Text("Status:", font=("Tahoma", 20), size=(14,1)), sg.Input(key="status", font=("Tahoma", 20), size=(20,1))],
             [sg.Text("", size=(1,1))],
             [sg.Image(key="photo_display", size=(240, 240))],
         ])],
@@ -56,123 +56,127 @@ def create_property_layout():
 
 def create_payments_layout():
     return [
-        [sg.Text("Sales Management System", font=("Helvetica", 20), justification="center")],
+        [sg.Text("Sales Management System", font=("Tahoma", 20), justification="center")],
         [sg.Text("", size=(2,2))],
         [sg.Column([
-            [sg.Button("Add Payment", font=("Helvetica", 20))],
+            [sg.Button("Add Payment", button_color=(sg.theme_text_color(), sg.theme_background_color()), border_width=0, font=("Tahoma", 20))],
             [sg.Text("", size=(1,1))],
-            [sg.Button("View Payments", font=("Helvetica", 20))],
+            [sg.Button("View Payments", button_color=(sg.theme_text_color(), sg.theme_background_color()), border_width=0, font=("Tahoma", 20))],
             [sg.Text("", size=(1,1))],
-            [sg.Button("Setup Plan", font=("Helvetica", 20))],
+            [sg.Button("Setup Plan", button_color=(sg.theme_text_color(), sg.theme_background_color()), border_width=0, font=("Tahoma", 20))],
             [sg.Text("", size=(1,1))],
-            [sg.Button("View Installments", font=("Helvetica", 20))],
+            [sg.Button("View Installments", button_color=(sg.theme_text_color(), sg.theme_background_color()), border_width=0, font=("Tahoma", 20))],
             [sg.Text("", size=(1,1))],
-            [sg.Button("Due Payments", font=("Helvetica", 20))],
+            [sg.Button("Due Payments", button_color=(sg.theme_text_color(), sg.theme_background_color()), border_width=0, font=("Tahoma", 20))],
             [sg.Text("", size=(1,1))],
-            [sg.Button("Back", font=("Helvetica", 20))],
+            [sg.Button("Back", button_color=(sg.theme_text_color(), sg.theme_background_color()), border_width=0, font=("Tahoma", 20))],
         ]),
         sg.VerticalSeparator(),
         sg.Column([
-            [sg.Text("Client ID", font=("Helvetica", 20), size=(18,1)), sg.Input(key="client_id", font=("Helvetica", 20), size=(12,1))],
-            [sg.Text("Property ID", font=("Helvetica", 20), size=(18,1)), sg.Input(key="property_id", font=("Helvetica", 20), size=(12,1))],
-            [sg.Text("Amount", font=("Helvetica", 20), size=(18,1)), sg.Input(key="amount", font=("Helvetica", 20), size=(12,1))],
-            [sg.Text("Date (YYYY-MM-DD)", font=("Helvetica", 20), size=(18,1)), sg.Input(key="date", font=("Helvetica", 20), size=(12,1))],
-            [sg.Text("Status", font=("Helvetica", 20), size=(18,1)), sg.Combo(["Paid", "Pending", "Overdue"], key="status", font=("Helvetica", 20), size=(12,1))],
+            [sg.Text("Client ID", font=("Tahoma", 20), size=(18,1)), sg.Input(key="client_id", font=("Tahoma", 20), size=(12,1))],
+            [sg.Text("Property ID", font=("Tahoma", 20), size=(18,1)), sg.Input(key="property_id", font=("Tahoma", 20), size=(12,1))],
+            [sg.Text("Amount", font=("Tahoma", 20), size=(18,1)), sg.Input(key="amount", font=("Tahoma", 20), size=(12,1))],
+            [sg.Text("Date (YYYY-MM-DD)", font=("Tahoma", 20), size=(18,1)), sg.Input(key="date", font=("Tahoma", 20), size=(12,1))],
+            [sg.Text("Status", font=("Tahoma", 20), size=(18,1)), sg.Combo(["Paid", "Pending", "Overdue"], key="status", font=("Tahoma", 20), size=(12,1))],
         ])],
     ]
 
 def create_reports_layout():
     return [
-        [sg.Text("Sales Management System", font=("Helvetica", 20), justification="center")],
+        [sg.Text("Sales Management System", font=("Tahoma", 20), justification="center")],
         [sg.Text("", size=(2,2))],
         [sg.Column([
-            [sg.Button("Generate Report", font=("Helvetica", 20))],
+            [sg.Button("Generate Report", button_color=(sg.theme_text_color(), sg.theme_background_color()), border_width=0, font=("Tahoma", 20))],
             [sg.Text("", size=(1,1))],
-            [sg.Button("Back", font=("Helvetica", 20))],
+            [sg.Button("Back", button_color=(sg.theme_text_color(), sg.theme_background_color()), border_width=0, font=("Tahoma", 20))],
         ]),
         sg.VerticalSeparator(),
         sg.Column([
-            [sg.Text("Select Report Type:", font=("Helvetica", 20), size=(20,1))],
-            [sg.Combo(["Overdue Payments", "Payments by Client", "Payments by Property"], key="report_type", font=("Helvetica", 20), size=(25, 1))],
+            [sg.Text("Select Report Type:", font=("Tahoma", 20), size=(20,1))],
+            [sg.Combo(["Overdue Payments", "Payments by Client", "Payments by Property"], key="report_type", font=("Tahoma", 20), size=(25, 1))],
         ])],
     ]
 
 def create_dashboard_layout():
     return [
-        [sg.Text("Sales Management System", font=("Helvetica", 20), justification="center")],
+        [sg.Text("Sales Management System", font=("Tahoma", 20), justification="center")],
         [sg.Text("", size=(2,2))],
-        [sg.Push(), sg.Button("Manage Clients", font=("Helvetica", 20), size=(20, 1)), sg.Button("Manage Properties", font=("Helvetica", 20), size=(20, 1)), sg.Push()],
+        [sg.Push(), sg.Button("Manage Clients", button_color=(sg.theme_text_color(), sg.theme_background_color()), border_width=0, font=("Tahoma", 20), size=(20, 1)), sg.Button("Manage Properties", button_color=(sg.theme_text_color(), sg.theme_background_color()), border_width=0, font=("Tahoma", 20), size=(20, 1)), sg.Push()],
         [sg.Text("", size=(1,1))],
-        [sg.Push(), sg.Button("Manage Payments", font=("Helvetica", 20), size=(20, 1)), sg.Button("Reports", font=("Helvetica", 20), size=(20, 1)), sg.Push()],
+        [sg.Push(), sg.Button("Manage Payments", button_color=(sg.theme_text_color(), sg.theme_background_color()), border_width=0, font=("Tahoma", 20), size=(20, 1)), sg.Button("Reports", button_color=(sg.theme_text_color(), sg.theme_background_color()), border_width=0, font=("Tahoma", 20), size=(20, 1)), sg.Push()],
         [sg.Text("", size=(1,1))],
-        [sg.Text("", key="due_alert", font=("Helvetica", 16), text_color="red", justification="center")],
+        [sg.Text("", key="due_alert", font=("Tahoma", 16), text_color="red", justification="center")],
         [sg.Text("", size=(1,1))],
-        [sg.Push(), sg.Button("Logout", font=("Helvetica", 20), size=(20, 1))]
+        [sg.Push(), sg.Button("Logout", button_color=(sg.theme_text_color(), sg.theme_background_color()), border_width=0, font=("Tahoma", 20), size=(20, 1))]
     ]
 
 def create_login_layout():
     return [
-        [sg.Text("Primarius Realty Development", font=("Helvetica", 20), justification="center")],
+        [sg.Text("Primarius Realty Development", font=("Tahoma", 20), justification="center")],
         [sg.Text("", size=(5,5))],
-        [sg.Text("Username:", font=("Helvetica", 20)), sg.Input(key="username", font=("Helvetica", 20), size=(20, 1))],
-        [sg.Text("Password:", font=("Helvetica", 20)), sg.Input(key="password", password_char="*", font=("Helvetica", 20), size=(20, 1))],
+        [sg.Text("Username:", font=("Tahoma", 20)), sg.Input(key="username", font=("Tahoma", 20), size=(20, 1))],
+        [sg.Text("Password:", font=("Tahoma", 20)), sg.Input(key="password", password_char="*", font=("Tahoma", 20), size=(20, 1))],
         [sg.Text("", size=(1,1))],
-        [sg.Button("Login", font=("Helvetica", 20), size=(20, 1))],
-        [sg.Button("Register", font=("Helvetica", 20), size=(20, 1))],
-        [sg.Button("Exit", font=("Helvetica", 20), size=(20, 1))]
+        [sg.Button("Login", button_color=(sg.theme_text_color(), sg.theme_background_color()), border_width=0, font=("Tahoma", 20))],
+        [sg.Button("Register", button_color=(sg.theme_text_color(), sg.theme_background_color()), border_width=0, font=("Tahoma", 20))],
+        [sg.Button("Exit", button_color=(sg.theme_text_color(), sg.theme_background_color()), border_width=0, font=("Tahoma", 20))]
     ]
 
 def create_registration_layout():
     return [
-        [sg.Text("Primarius Realty Development", font=("Helvetica", 20), justification="center")],
-        [sg.Text("", size=(5,5))],
-        [sg.Text("Username:", font=("Helvetica", 20)), sg.Input(key="username", font=("Helvetica", 20), size=(20, 1))],
-        [sg.Text("Password:", font=("Helvetica", 20)), sg.Input(key="password", password_char="*", font=("Helvetica", 20), size=(20, 1))],
-        [sg.Text("", size=(1,1))],
-        [sg.Button("Register", font=("Helvetica", 20), size=(20, 1))]
+        [sg.Text("Sales Management System", font=("Tahoma", 20), justification="center")],
+        [sg.Text("", size=(2,2))],
+        [sg.Column([
+            [sg.Button("Register", button_color=(sg.theme_text_color(), sg.theme_background_color()), border_width=0, font=("Tahoma", 20))],
+        ]),
+        sg.VerticalSeparator(),
+        sg.Column([
+            [sg.Text("Username:", font=("Tahoma", 20), size=(12,1)), sg.Input(key="username", font=("Tahoma", 20), size=(20, 1))],
+            [sg.Text("Password:", font=("Tahoma", 20), size=(12,1)), sg.Input(key="password", password_char="*", font=("Tahoma", 20), size=(20, 1))],
+        ])],
     ]
 
 def create_payment_plan_layout():
     return [
-        [sg.Text("Sales Management System", font=("Helvetica", 20), justification="center")],
+        [sg.Text("Sales Management System", font=("Tahoma", 20), justification="center")],
         [sg.Text("", size=(2,2))],
         [sg.Column([
-            [sg.Button("Calculate", font=("Helvetica", 20))],
+            [sg.Button("Calculate", button_color=(sg.theme_text_color(), sg.theme_background_color()), border_width=0, font=("Tahoma", 20))],
             [sg.Text("", size=(1,1))],
-            [sg.Button("Create Plan", font=("Helvetica", 20))],
+            [sg.Button("Create Plan", button_color=(sg.theme_text_color(), sg.theme_background_color()), border_width=0, font=("Tahoma", 20))],
             [sg.Text("", size=(1,1))],
-            [sg.Button("Back", font=("Helvetica", 20))],
+            [sg.Button("Back", button_color=(sg.theme_text_color(), sg.theme_background_color()), border_width=0, font=("Tahoma", 20))],
         ]),
         sg.VerticalSeparator(),
         sg.Column([
-            [sg.Text("Client ID", font=("Helvetica", 20), size=(20,1)), sg.Input(key="client_id", font=("Helvetica", 20), size=(15,1))],
-            [sg.Text("Property ID", font=("Helvetica", 20), size=(20,1)), sg.Input(key="property_id", font=("Helvetica", 20), size=(15,1))],
-            [sg.Text("Total Amount", font=("Helvetica", 20), size=(20,1)), sg.Input(key="total_amount", font=("Helvetica", 20), size=(15,1))],
-            [sg.Text("Down Payment", font=("Helvetica", 20), size=(20,1)), sg.Input(key="down_payment", font=("Helvetica", 20), size=(15,1))],
-            [sg.Text("Installments", font=("Helvetica", 20), size=(20,1)), sg.Input(key="installments", font=("Helvetica", 20), size=(15,1))],
-            [sg.Text("Frequency", font=("Helvetica", 20), size=(20,1)), sg.Combo(["Weekly", "Monthly", "Quarterly", "Yearly"], key="frequency", font=("Helvetica", 20), size=(15,1))],
-            [sg.Text("Start Date (YYYY-MM-DD)", font=("Helvetica", 20), size=(20,1)), sg.Input(key="start_date", font=("Helvetica", 20), size=(15,1))],
+            [sg.Text("Client ID", font=("Tahoma", 20), size=(20,1)), sg.Input(key="client_id", font=("Tahoma", 20), size=(15,1))],
+            [sg.Text("Property ID", font=("Tahoma", 20), size=(20,1)), sg.Input(key="property_id", font=("Tahoma", 20), size=(15,1))],
+            [sg.Text("Total Amount", font=("Tahoma", 20), size=(20,1)), sg.Input(key="total_amount", font=("Tahoma", 20), size=(15,1))],
+            [sg.Text("Down Payment", font=("Tahoma", 20), size=(20,1)), sg.Input(key="down_payment", font=("Tahoma", 20), size=(15,1))],
+            [sg.Text("Installments", font=("Tahoma", 20), size=(20,1)), sg.Input(key="installments", font=("Tahoma", 20), size=(15,1))],
+            [sg.Text("Frequency", font=("Tahoma", 20), size=(20,1)), sg.Combo(["Weekly", "Monthly", "Quarterly", "Yearly"], key="frequency", font=("Tahoma", 20), size=(15,1))],
+            [sg.Text("Start Date (YYYY-MM-DD)", font=("Tahoma", 20), size=(20,1)), sg.Input(key="start_date", font=("Tahoma", 20), size=(15,1))],
             [sg.Text("", size=(1,1))],
-            [sg.Text("", key="calc_result", font=("Helvetica", 16), text_color="yellow")],
+            [sg.Text("", key="calc_result", font=("Tahoma", 16), text_color="yellow")],
         ])],
     ]
 
 def create_installments_layout():
     return [
-        [sg.Text("Sales Management System", font=("Helvetica", 20), justification="center")],
+        [sg.Text("Sales Management System", font=("Tahoma", 20), justification="center")],
         [sg.Text("", size=(2,2))],
         [sg.Column([
-            [sg.Button("Show All Pending", font=("Helvetica", 20))],
+            [sg.Button("Show All Pending", button_color=(sg.theme_text_color(), sg.theme_background_color()), border_width=0, font=("Tahoma", 20))],
             [sg.Text("", size=(1,1))],
-            [sg.Button("Check Due Payments", font=("Helvetica", 20))],
+            [sg.Button("Check Due Payments", button_color=(sg.theme_text_color(), sg.theme_background_color()), border_width=0, font=("Tahoma", 20))],
             [sg.Text("", size=(1,1))],
-            [sg.Button("Mark as Paid", font=("Helvetica", 20))],
+            [sg.Button("Mark as Paid", button_color=(sg.theme_text_color(), sg.theme_background_color()), border_width=0, font=("Tahoma", 20))],
             [sg.Text("", size=(1,1))],
-            [sg.Button("Back", font=("Helvetica", 20))],
+            [sg.Button("Back", button_color=(sg.theme_text_color(), sg.theme_background_color()), border_width=0, font=("Tahoma", 20))],
         ]),
         sg.VerticalSeparator(),
         sg.Column([
-            [sg.Text("Installment ID to pay:", font=("Helvetica", 20), size=(22,1)), sg.Input(key="installment_id", font=("Helvetica", 20), size=(10,1))],
+            [sg.Text("Installment ID to pay:", font=("Tahoma", 20), size=(22,1)), sg.Input(key="installment_id", font=("Tahoma", 20), size=(10,1))],
         ])],
     ]
 
