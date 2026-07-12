@@ -3,8 +3,21 @@ import PySimpleGUI as sg
 import hashlib
 from datetime import datetime, timedelta
 import calendar
+from PIL import Image
+import io
 
 sg.theme("DarkBlue")
+
+def resize_image_for_display(img_bytes, max_w=240, max_h=240):
+    try:
+        img = Image.open(io.BytesIO(img_bytes))
+        img.thumbnail((max_w, max_h), Image.LANCZOS)
+    except Exception as e:
+        sg.popup(f"Photo resize failed: {e}")
+        return img_bytes
+    buf = io.BytesIO()
+    img.save(buf, format="PNG")
+    return buf.getvalue()
 
 def create_client_layout():
     return [
@@ -35,7 +48,7 @@ def create_property_layout():
             [sg.Text("", size=(1,1))],
             [sg.Button("View Properties", button_color=(sg.theme_text_color(), sg.theme_background_color()), border_width=0, font=("Helvetica", 20))],
             [sg.Text("", size=(1,1))],
-            [sg.Button("Upload Photo", button_color=(sg.theme_text_color(), sg.theme_background_color()), border_width=0, font=("Helvetica", 20))],
+            [sg.Button("Upload Photos", button_color=(sg.theme_text_color(), sg.theme_background_color()), border_width=0, font=("Helvetica", 20))],
             [sg.Text("", size=(1,1))],
             [sg.Button("Back", button_color=(sg.theme_text_color(), sg.theme_background_color()), border_width=0, font=("Helvetica", 20))],
         ]),
@@ -48,7 +61,8 @@ def create_property_layout():
             [sg.Text("Price:", font=("Helvetica", 20), size=(14,1)), sg.Input(key="price", font=("Helvetica", 20), size=(20,1))],
             [sg.Text("Status:", font=("Helvetica", 20), size=(14,1)), sg.Input(key="status", font=("Helvetica", 20), size=(20,1))],
             [sg.Text("", size=(1,1))],
-            [sg.Image(key="photo_display", size=(240, 240))],
+            [sg.Image(key="photo_display", size=(220, 220)),
+             sg.Image(key="photo_display2", size=(220, 220))],
         ])],
     ]
 
@@ -206,10 +220,15 @@ def init_db():
         location TEXT,
         price REAL,
         status TEXT,
-        photo BLOB
+        photo BLOB,
+        photo2 BLOB
     )""")
     try:
         c.execute("ALTER TABLE properties ADD COLUMN photo BLOB")
+    except sqlite3.OperationalError:
+        pass
+    try:
+        c.execute("ALTER TABLE properties ADD COLUMN photo2 BLOB")
     except sqlite3.OperationalError:
         pass
     c.execute("""CREATE TABLE IF NOT EXISTS payments(
@@ -351,8 +370,10 @@ def client_window():
     window.close()
 
 def property_window():
-    window = sg.Window("Property Management", create_property_layout(), resizable=True, element_justification='c', size=(800, 550))
+    window = sg.Window("Property Management", create_property_layout(), resizable=True, element_justification='c', size=(850, 550))
     current_photo = None
+    current_photo2 = None
+    current_property_id = None
     while True:
         event, values = window.read()
         if event in (sg.WIN_CLOSED, "Back"):
@@ -361,43 +382,64 @@ def property_window():
             try:
                 conn = sqlite3.connect("primaris.db")
                 c = conn.cursor()
-                c.execute("SELECT id, name, location, price, status, photo FROM properties WHERE id=?",
+                c.execute("SELECT id, name, location, price, status, photo, photo2 FROM properties WHERE id=?",
                           (values["lookup_id"],))
                 row = c.fetchone()
                 conn.close()
                 if row:
+                    current_property_id = row[0]
                     window["name"].update(row[1])
                     window["location"].update(row[2])
                     window["price"].update(row[3])
                     window["status"].update(row[4])
                     if row[5]:
-                        window["photo_display"].update(data=row[5])
+                        resized = resize_image_for_display(row[5])
+                        window["photo_display"].update(data=resized)
                         current_photo = row[5]
                     else:
                         window["photo_display"].update(data=sg.DEFAULT_BASE64_IMAGE)
                         current_photo = None
+                    if row[6]:
+                        resized2 = resize_image_for_display(row[6])
+                        window["photo_display2"].update(data=resized2)
+                        current_photo2 = row[6]
+                    else:
+                        window["photo_display2"].update(data=sg.DEFAULT_BASE64_IMAGE)
+                        current_photo2 = None
                 else:
                     sg.popup("Property not found")
             except Exception as e:
                 sg.popup(f"Error: {e}")
-        elif event == "Upload Photo":
-            path = sg.popup_get_file("Select Photo", file_types=(("PNG Files", "*.png"), ("GIF Files", "*.gif"), ("All Files", "*.*")))
-            if path:
+        elif event == "Upload Photos":
+            raw = sg.popup_get_file("Select up to 2 Photos", multiple_files=True, file_types=(("PNG Files", "*.png"), ("GIF Files", "*.gif"), ("All Files", "*.*")))
+            if raw:
+                files = raw.split(";") if isinstance(raw, str) else list(raw)
+                files = [f.strip("'\" ") for f in files[:2]]
                 try:
-                    with open(path, "rb") as f:
-                        current_photo = f.read()
-                    window["photo_display"].update(data=current_photo)
+                    for i, p in enumerate(files):
+                        with open(p, "rb") as f:
+                            data = f.read()
+                        if i == 0:
+                            current_photo = data
+                            resized = resize_image_for_display(data)
+                            window["photo_display"].update(data=resized)
+                        else:
+                            current_photo2 = data
+                            resized2 = resize_image_for_display(data)
+                            window["photo_display2"].update(data=resized2)
                 except Exception as e:
                     sg.popup(f"Error loading photo: {e}")
         elif event == "Add Property":
             conn = sqlite3.connect("primaris.db")
             c = conn.cursor()
-            c.execute("""INSERT INTO properties (name, location, price, status, photo) VALUES (?, ?, ?, ?, ?)""",
-                      (values["name"], values["location"], values["price"], values["status"], current_photo))
+            c.execute("""INSERT INTO properties (name, location, price, status, photo, photo2) VALUES (?, ?, ?, ?, ?, ?)""",
+                      (values["name"], values["location"], values["price"], values["status"], current_photo, current_photo2))
             conn.commit()
+            current_property_id = c.lastrowid
             conn.close()
             sg.popup("Property added successfully!")
             current_photo = None
+            current_photo2 = None
         elif event == "View Properties":
             conn = sqlite3.connect("primaris.db")
             c = conn.cursor()
@@ -534,6 +576,14 @@ def reports_window():
             c = conn.cursor()
             report_type = values["report_type"]
             output = ""
+            def fmt_date(d):
+                if not d:
+                    return "--:--:----"
+                parts = d.split("-")
+                if len(parts) == 3:
+                    return f"{parts[1]}:{parts[2]}:{parts[0]}"
+                return d
+
             if report_type == "Overdue Payments":
                 c.execute("""SELECT payments.date, properties.name, payments.amount
                              FROM payments
@@ -541,41 +591,38 @@ def reports_window():
                              WHERE payments.status='Overdue'""")
                 rows = c.fetchall()
                 if rows:
-                    output = "Overdue Payments\n" + "="*50 + "\n"
+                    output = f"{'OVERDUE PAYMENTS':^55}\n"
+                    output += "="*55 + "\n\n"
                     for r in rows:
-                        d = r[0] if r[0] else "00:00:0000"
-                        parts = d.split("-")
-                        if len(parts) == 3:
-                            d = f"{parts[1]}:{parts[2]}:{parts[0]}"
-                        output += f"[{d}] {r[1]}: \u20b1{r[2]:,.2f}\n"
+                        output += f"  [{fmt_date(r[0]):>12}]  {r[1]:<25}  \u20b1{r[2]:>8,.2f}\n"
                 else:
                     output = "No overdue payments found."
             elif report_type == "Payments by Client":
                 c.execute("""SELECT clients.name, SUM(payments.amount), MAX(payments.date), COUNT(payments.id)
                              FROM payments
                              JOIN clients ON payments.client_id = clients.id
-                             GROUP BY clients.name""")
+                             GROUP BY clients.name
+                             ORDER BY SUM(payments.amount) DESC""")
                 rows = c.fetchall()
                 if rows:
-                    output = f"{'Payments by Client':^60}\n" + "="*60 + "\n"
-                    output += f"{'Client':<20} {'Total':<14} {'Last Payment':<14} {'Payments'}\n"
-                    output += "-"*60 + "\n"
+                    output = f"{'PAYMENTS BY CLIENT':^55}\n"
+                    output += "="*55 + "\n\n"
                     for r in rows:
-                        output += f"{r[0]:<20} \u20b1{r[1]:<10,.2f} {r[2]:<14} {r[3]}\n"
+                        output += f"  {r[0]:<20}  \u20b1{r[1]:>8,.2f}  [{fmt_date(r[2]):>12}]  {r[3]}\n"
                 else:
                     output = "No payment data found."
             elif report_type == "Payments by Property":
                 c.execute("""SELECT properties.location, SUM(payments.amount), MAX(payments.date), COUNT(payments.id)
                              FROM payments
                              JOIN properties ON payments.property_id = properties.id
-                             GROUP BY properties.location""")
+                             GROUP BY properties.location
+                             ORDER BY SUM(payments.amount) DESC""")
                 rows = c.fetchall()
                 if rows:
-                    output = f"{'Payments by Property':^60}\n" + "="*60 + "\n"
-                    output += f"{'Location':<20} {'Total':<14} {'Last Payment':<14} {'Payments'}\n"
-                    output += "-"*60 + "\n"
+                    output = f"{'PAYMENTS BY PROPERTY':^55}\n"
+                    output += "="*55 + "\n\n"
                     for r in rows:
-                        output += f"{r[0]:<20} \u20b1{r[1]:<10,.2f} {r[2]:<14} {r[3]}\n"
+                        output += f"  {r[0]:<20}  \u20b1{r[1]:>8,.2f}  [{fmt_date(r[2]):>12}]  {r[3]}\n"
                 else:
                     output = "No payment data found."
             conn.close()
