@@ -167,9 +167,8 @@ def create_payment_plan_layout():
             [sg.Text("Property ID", font=("Helvetica", 20), size=(20,1)), sg.Input(key="property_id", font=("Helvetica", 20), size=(15,1))],
             [sg.Text("Total Amount", font=("Helvetica", 20), size=(20,1)), sg.Input(key="total_amount", font=("Helvetica", 20), size=(15,1))],
             [sg.Text("Down Payment", font=("Helvetica", 20), size=(20,1)), sg.Input(key="down_payment", font=("Helvetica", 20), size=(15,1))],
-            [sg.Text("Installments", font=("Helvetica", 20), size=(20,1)), sg.Input(key="installments", font=("Helvetica", 20), size=(15,1))],
-            [sg.Text("Frequency", font=("Helvetica", 20), size=(20,1)), sg.Combo(["Weekly", "Monthly", "Quarterly", "Yearly"], key="frequency", font=("Helvetica", 20), size=(15,1))],
-            [sg.Text("Start Date (YYYY-MM-DD)", font=("Helvetica", 20), size=(20,1)), sg.Input(key="start_date", font=("Helvetica", 20), size=(15,1))],
+            [sg.Text("Frequency", font=("Helvetica", 20), size=(20,1)), sg.Combo(["6 Months", "12 Months"], key="frequency", font=("Helvetica", 20), size=(15,1))],
+            [sg.Text("Start Date (YY-MM-DD)", font=("Helvetica", 20), size=(20,1)), sg.Input(key="start_date", font=("Helvetica", 20), size=(15,1))],
             [sg.Text("", size=(1,1))],
             [sg.Text("", key="calc_result", font=("Helvetica", 16), text_color="yellow")],
         ])],
@@ -451,7 +450,6 @@ def property_window():
 
 def payment_plan_window():
     window = sg.Window("Payment Plan", create_payment_plan_layout(), resizable=True, element_justification='c', size=(750, 520))
-    installment_amount = 0
     while True:
         event, values = window.read()
         if event in (sg.WIN_CLOSED, "Back"):
@@ -460,17 +458,19 @@ def payment_plan_window():
             try:
                 total = float(values["total_amount"])
                 down = float(values["down_payment"])
-                num = int(values["installments"])
+                freq = values["frequency"]
+                num = 6 if freq == "6 Months" else 12
                 remaining = total - down
                 installment_amount = round(remaining / num, 2)
-                window["calc_result"].update(f"Remaining: \u20b1{remaining:,.2f}  |  {num} installments of \u20b1{installment_amount:,.2f} each")
+                window["calc_result"].update(f"Remaining: \u20b1{remaining:,.2f}  |  {num} monthly installments of \u20b1{installment_amount:,.2f} each")
             except (ValueError, ZeroDivisionError):
-                sg.popup("Enter valid numbers for total, down payment, and installments")
+                sg.popup("Enter valid numbers for total and down payment, and select a frequency")
         if event == "Create Plan":
             try:
                 total = float(values["total_amount"])
                 down = float(values["down_payment"])
-                num = int(values["installments"])
+                freq = values["frequency"]
+                num = 6 if freq == "6 Months" else 12
                 remaining = total - down
                 installment_amount = round(remaining / num, 2)
                 conn = sqlite3.connect("primaris.db")
@@ -482,8 +482,8 @@ def payment_plan_window():
                 plan_id = c.lastrowid
                 conn.commit()
                 conn.close()
-                create_installments(plan_id, values["client_id"], values["property_id"], num, installment_amount, values["start_date"], values["frequency"])
-                sg.popup(f"Payment plan created! {num} installments of \u20b1{installment_amount:,.2f} each.")
+                create_installments(plan_id, values["client_id"], values["property_id"], num, installment_amount, values["start_date"], "Monthly")
+                sg.popup(f"Payment plan created! {num} monthly installments of \u20b1{installment_amount:,.2f} each.")
                 window.close()
                 break
             except (ValueError, ZeroDivisionError):
@@ -630,7 +630,7 @@ def reports_window():
     window.close()
 
 def login_window():
-    window = sg.Window("Login", create_login_layout(), resizable=True, element_justification='c', size=(550, 400))
+    window = sg.Window("Login", create_login_layout(), resizable=True, element_justification='c', size=(550, 450))
     while True:
         event, values = window.read()
         if event in (sg.WIN_CLOSED, "Exit"):
