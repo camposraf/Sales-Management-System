@@ -65,12 +65,17 @@ def property_details_popup(prop):
         resized2 = resize_image_for_display(prop["photo2"])
         photo_col.append([sg.Image(data=resized2, key="-PHOTO2-")])
 
+    try:
+        price_str = f"\u20b1{float(prop['price']):,.2f}" if prop['price'] else "--"
+    except (ValueError, TypeError):
+        price_str = "--"
+
     layout = [
         [sg.Text("Property Details", font=("Helvetica", 20), justification="center")],
         [sg.Text(f"ID: {prop['id']}", font=("Helvetica", 16))],
         [sg.Text(f"Name: {prop['name'] or ''}", font=("Helvetica", 16))],
         [sg.Text(f"Location: {prop['location'] or ''}", font=("Helvetica", 16))],
-        [sg.Text(f"Price: \u20b1{prop['price']:,.2f}" if prop['price'] else "Price: --", font=("Helvetica", 16))],
+        [sg.Text(f"Price: {price_str}", font=("Helvetica", 16))],
         [sg.Text(f"Status: {prop['status'] or ''}", font=("Helvetica", 16))],
         [sg.HorizontalSeparator()],
         [sg.Text("Client Information", font=("Helvetica", 16))],
@@ -85,29 +90,40 @@ def property_details_popup(prop):
         layout.append([sg.Column(photo_col, justification="center")])
     layout.append([sg.Push(), sg.Button("Close", font=("Helvetica", 14)), sg.Push()])
 
-    sg.Window("Property Details", layout, size=(700, 500), resizable=True, element_justification='c', modal=True).read(close=True)
+    sg.Window("Property Details", layout, size=(800, 600), resizable=False, element_justification='c', modal=True, finalize=True).read(close=True)
 
 def create_dashboard_layout():
     prop_tab = sg.Tab("Properties", [
+        [sg.Push(), sg.Button("Manage Properties", button_color=(sg.theme_text_color(), sg.theme_background_color()), border_width=0, font=("Helvetica", 16)), sg.Push()],
+        [sg.Text("Search:", font=("Helvetica", 16)), sg.Input(key="search_keyword", font=("Helvetica", 16), size=(30,1), expand_x=True),
+         sg.Button("Search", button_color=(sg.theme_text_color(), sg.theme_background_color()), border_width=0, font=("Helvetica", 14))],
+        [sg.Table(
+            values=[["", "", "", "", "", ""]],
+            headings=["ID", "Name", "Location", "Price", "Status", "Client"],
+            key="prop_search_results",
+            font=("Helvetica", 12),
+            justification="left",
+            num_rows=6,
+            auto_size_columns=True,
+            visible=False,
+            enable_click_events=True,
+            expand_x=True
+        )],
+        [sg.HorizontalSeparator()],
+        [sg.Text("SELECTED PROPERTY", font=("Helvetica", 14, "bold"), visible=False, key="-DETAIL_HEADER-")],
         [sg.Column([
-            [sg.Button("Manage Properties", button_color=(sg.theme_text_color(), sg.theme_background_color()), border_width=0, font=("Helvetica", 20))],
-        ]),
-        sg.VerticalSeparator(),
-        sg.Column([
-            [sg.Text("Search:", font=("Helvetica", 20), size=(14,1)), sg.Input(key="search_keyword", font=("Helvetica", 20), size=(20,1)),
-             sg.Button("Search", button_color=(sg.theme_text_color(), sg.theme_background_color()), border_width=0, font=("Helvetica", 20))],
-            [sg.Table(
-                values=[["", "", "", "", "", ""]],
-                headings=["ID", "Name", "Location", "Price", "Status", "Client"],
-                key="prop_search_results",
-                font=("Helvetica", 12),
-                justification="left",
-                num_rows=6,
-                col_widths=[30, 30, 30, 30, 30, 30],
-                visible=False,
-                enable_click_events=True
-            )],
-        ])],
+            [sg.Text("Name:", font=("Helvetica", 12), size=(10,1)), sg.Text("", key="-DETAIL_NAME-", font=("Helvetica", 12), size=(30,1)),
+             sg.Text("Location:", font=("Helvetica", 12), size=(10,1)), sg.Text("", key="-DETAIL_LOCATION-", font=("Helvetica", 12), size=(25,1))],
+            [sg.Text("Price:", font=("Helvetica", 12), size=(10,1)), sg.Text("", key="-DETAIL_PRICE-", font=("Helvetica", 12), size=(30,1)),
+             sg.Text("Status:", font=("Helvetica", 12), size=(10,1)), sg.Text("", key="-DETAIL_STATUS-", font=("Helvetica", 12), size=(25,1))],
+            [sg.Text("Client:", font=("Helvetica", 12), size=(10,1)), sg.Text("", key="-DETAIL_CLIENT-", font=("Helvetica", 12), size=(30,1)),
+             sg.Text("Contact:", font=("Helvetica", 12), size=(10,1)), sg.Text("", key="-DETAIL_CONTACT-", font=("Helvetica", 12), size=(25,1))],
+            [sg.Text("Email:", font=("Helvetica", 12), size=(10,1)), sg.Text("", key="-DETAIL_EMAIL-", font=("Helvetica", 12), size=(30,1)),
+             sg.Text("Address:", font=("Helvetica", 12), size=(10,1)), sg.Text("", key="-DETAIL_ADDRESS-", font=("Helvetica", 12), size=(25,1))],
+        ], visible=False, key="-DETAIL_FIELDS-")],
+        [sg.Column([
+            [sg.Image(key="-DETAIL_PHOTO1-", size=(200, 200)), sg.Image(key="-DETAIL_PHOTO2-", size=(200, 200))]
+        ], visible=False, key="-DETAIL_PHOTOS-")],
     ])
     pay_tab = sg.Tab("Payments", [
         [sg.Column([
@@ -144,49 +160,47 @@ def create_dashboard_layout():
     return [
         [sg.Text("Sales Management System", font=("Helvetica", 20), justification="center")],
         [sg.Text("", key="due_alert", font=("Helvetica", 16), text_color="red", justification="center")],
-        [sg.TabGroup([[prop_tab, pay_tab, rpt_tab]], tab_location='lefttab', font=("Helvetica", 14), expand_x=True, size=(900, 560))],
+        [sg.TabGroup([[prop_tab, pay_tab, rpt_tab]], tab_location='lefttab', font=("Helvetica", 14), expand_x=True, size=(1100, 650))],
         [sg.Push(), sg.Button("Logout", button_color=(sg.theme_text_color(), sg.theme_background_color()), border_width=0, font=("Helvetica", 20)), sg.Push()],
     ]
 
 def create_property_management_layout():
     return [
         [sg.Text("Manage Properties", font=("Helvetica", 20), justification="center")],
-        [sg.Text("", size=(1,2))],
+        [sg.Button("Add Property", button_color=(sg.theme_text_color(), sg.theme_background_color()), border_width=0, font=("Helvetica", 14)),
+         sg.Button("Upload Photos", button_color=(sg.theme_text_color(), sg.theme_background_color()), border_width=0, font=("Helvetica", 14)),
+         sg.Button("Back", button_color=(sg.theme_text_color(), sg.theme_background_color()), border_width=0, font=("Helvetica", 14))],
+        [sg.Text("Search:", font=("Helvetica", 16)), sg.Input(key="prop_search_keyword", font=("Helvetica", 16), size=(30,1), expand_x=True),
+         sg.Button("Search", button_color=(sg.theme_text_color(), sg.theme_background_color()), border_width=0, font=("Helvetica", 14))],
+        [sg.Table(
+            values=[["", "", "", "", "", ""]],
+            headings=["ID", "Name", "Location", "Price", "Status", "Client"],
+            key="prop_search_results",
+            font=("Helvetica", 12),
+            justification="left",
+            num_rows=5,
+            auto_size_columns=True,
+            visible=False,
+            enable_click_events=True,
+            expand_x=True
+        )],
+        [sg.HorizontalSeparator()],
         [sg.Column([
-            [sg.Button("Add Property", button_color=(sg.theme_text_color(), sg.theme_background_color()), border_width=0, font=("Helvetica", 20))],
-            [sg.Text("", size=(1,1))],
-            [sg.Button("Upload Photos", button_color=(sg.theme_text_color(), sg.theme_background_color()), border_width=0, font=("Helvetica", 20))],
-            [sg.Text("", size=(1,1))],
-            [sg.Button("Back", button_color=(sg.theme_text_color(), sg.theme_background_color()), border_width=0, font=("Helvetica", 20))],
+            [sg.Text("Property Details", font=("Helvetica", 14, "bold"))],
+            [sg.Text("Name:", font=("Helvetica", 12), size=(10,1)), sg.Input(key="prop_name", font=("Helvetica", 12), size=(25,1))],
+            [sg.Text("Location:", font=("Helvetica", 12), size=(10,1)), sg.Input(key="prop_location", font=("Helvetica", 12), size=(25,1))],
+            [sg.Text("Price:", font=("Helvetica", 12), size=(10,1)), sg.Input(key="prop_price", font=("Helvetica", 12), size=(25,1))],
+            [sg.Text("Status:", font=("Helvetica", 12), size=(10,1)), sg.Input(key="prop_status", font=("Helvetica", 12), size=(25,1))],
         ]),
-        sg.VerticalSeparator(),
         sg.Column([
-            [sg.Text("Search:", font=("Helvetica", 20), size=(14,1)), sg.Input(key="prop_search_keyword", font=("Helvetica", 20), size=(20,1)),
-             sg.Button("Search", button_color=(sg.theme_text_color(), sg.theme_background_color()), border_width=0, font=("Helvetica", 20))],
-            [sg.Table(
-                values=[["", "", "", "", "", ""]],
-                headings=["ID", "Name", "Location", "Price", "Status", "Client"],
-                key="prop_search_results",
-                font=("Helvetica", 12),
-                justification="left",
-                num_rows=6,
-                col_widths=[30, 30, 30, 30, 30, 20],
-                visible=False,
-                enable_click_events=True,
-                expand_x=True
-            )],
-            [sg.Text("Name:", font=("Helvetica", 20), size=(14,1)), sg.Input(key="prop_name", font=("Helvetica", 20), size=(20,1))],
-            [sg.Text("Location:", font=("Helvetica", 20), size=(14,1)), sg.Input(key="prop_location", font=("Helvetica", 20), size=(20,1))],
-            [sg.Text("Price:", font=("Helvetica", 20), size=(14,1)), sg.Input(key="prop_price", font=("Helvetica", 20), size=(20,1))],
-            [sg.Text("Status:", font=("Helvetica", 20), size=(14,1)), sg.Input(key="prop_status", font=("Helvetica", 20), size=(20,1))],
-            [sg.Text("Client Name:", font=("Helvetica", 20), size=(14,1)), sg.Input(key="prop_client_name", font=("Helvetica", 20), size=(20,1))],
-            [sg.Text("Contact:", font=("Helvetica", 20), size=(14,1)), sg.Input(key="prop_client_contact", font=("Helvetica", 20), size=(20,1))],
-            [sg.Text("Email:", font=("Helvetica", 20), size=(14,1)), sg.Input(key="prop_client_email", font=("Helvetica", 20), size=(20,1))],
-            [sg.Text("Address:", font=("Helvetica", 20), size=(14,1)), sg.Input(key="prop_client_address", font=("Helvetica", 20), size=(20,1))],
-            [sg.Text("", size=(1,1))],
-            [sg.Image(key="photo_display", size=(220, 220)),
-             sg.Image(key="photo_display2", size=(220, 220))],
+            [sg.Text("Client Information", font=("Helvetica", 14, "bold"))],
+            [sg.Text("Name:", font=("Helvetica", 12), size=(10,1)), sg.Input(key="prop_client_name", font=("Helvetica", 12), size=(25,1))],
+            [sg.Text("Contact:", font=("Helvetica", 12), size=(10,1)), sg.Input(key="prop_client_contact", font=("Helvetica", 12), size=(25,1))],
+            [sg.Text("Email:", font=("Helvetica", 12), size=(10,1)), sg.Input(key="prop_client_email", font=("Helvetica", 12), size=(25,1))],
+            [sg.Text("Address:", font=("Helvetica", 12), size=(10,1)), sg.Input(key="prop_client_address", font=("Helvetica", 12), size=(25,1))],
         ])],
+        [sg.Image(key="photo_display", size=(200, 200)),
+         sg.Image(key="photo_display2", size=(200, 200))],
     ]
 
 def create_login_layout():
@@ -520,11 +534,38 @@ def login_window():
                 sg.popup("Invalid credentials")
     window.close()
 
-def manage_properties_window():
-    window = sg.Window("Manage Properties", create_property_management_layout(), resizable=True, element_justification='c', size=(850, 600))
+def manage_properties_window(prop_id=None):
+    window = sg.Window("Manage Properties", create_property_management_layout(), resizable=False, element_justification='c', size=(900, 650), finalize=True)
     current_photo = None
     current_photo2 = None
     prop_search_cache = []
+    if prop_id:
+        conn = sqlite3.connect("primarius.db")
+        c = conn.cursor()
+        c.execute("SELECT id, name, location, price, status, client_name, client_contact, client_email, client_address, photo, photo2 FROM properties WHERE id=?", (prop_id,))
+        row = c.fetchone()
+        conn.close()
+        if row:
+            window["prop_name"].update(row[1] or "")
+            window["prop_location"].update(row[2] or "")
+            window["prop_price"].update(row[3] or "")
+            window["prop_status"].update(row[4] or "")
+            window["prop_client_name"].update(row[5] or "")
+            window["prop_client_contact"].update(row[6] or "")
+            window["prop_client_email"].update(row[7] or "")
+            window["prop_client_address"].update(row[8] or "")
+            if row[9]:
+                resized = resize_image_for_display(row[9])
+                window["photo_display"].update(data=resized)
+                current_photo = row[9]
+            if row[10]:
+                resized2 = resize_image_for_display(row[10])
+                window["photo_display2"].update(data=resized2)
+                current_photo2 = row[10]
+            prop_search_cache = search_properties(row[1] or row[0])
+            if prop_search_cache:
+                table_data = [[r[0], r[1] or "", r[2] or "", f"\u20b1{r[3]:,.2f}", r[4] or "", r[5] or ""] for r in prop_search_cache]
+                window["prop_search_results"].update(values=table_data, visible=True)
     while True:
         event, values = window.read()
         if event in (sg.WIN_CLOSED, "Back"):
@@ -542,34 +583,35 @@ def manage_properties_window():
                 window["prop_search_results"].update(values=[["", "", "", "", "", ""]], visible=False)
                 sg.popup(f"No properties found matching '{keyword}'")
         elif isinstance(event, tuple) and event[0] == "prop_search_results":
-            row_idx = event[2][0]
-            if row_idx is not None and row_idx < len(prop_search_cache):
-                prop_id = prop_search_cache[row_idx][0]
-                conn = sqlite3.connect("primarius.db")
-                c = conn.cursor()
-                c.execute("SELECT id, name, location, price, status, client_name, client_contact, client_email, client_address, photo, photo2 FROM properties WHERE id=?", (prop_id,))
-                row = c.fetchone()
-                conn.close()
-                if row:
-                    window["prop_name"].update(row[1])
-                    window["prop_location"].update(row[2])
-                    window["prop_price"].update(row[3])
-                    window["prop_status"].update(row[4])
-                    window["prop_client_name"].update(row[5])
-                    window["prop_client_contact"].update(row[6])
-                    window["prop_client_email"].update(row[7])
-                    window["prop_client_address"].update(row[8])
-                    if row[9]:
-                        resized = resize_image_for_display(row[9])
-                        window["photo_display"].update(data=resized)
-                        current_photo = row[9]
-                    else:
-                        window["photo_display"].update(data=sg.DEFAULT_BASE64_IMAGE)
-                        current_photo = None
-                    if row[10]:
-                        resized2 = resize_image_for_display(row[10])
-                        window["photo_display2"].update(data=resized2)
-                        current_photo2 = row[10]
+            if len(event) > 2 and event[2] is not None and isinstance(event[2], tuple) and event[2][0] is not None:
+                row_idx = event[2][0]
+                if row_idx < len(prop_search_cache):
+                    prop_id = prop_search_cache[row_idx][0]
+                    conn = sqlite3.connect("primarius.db")
+                    c = conn.cursor()
+                    c.execute("SELECT id, name, location, price, status, client_name, client_contact, client_email, client_address, photo, photo2 FROM properties WHERE id=?", (prop_id,))
+                    row = c.fetchone()
+                    conn.close()
+                    if row:
+                        window["prop_name"].update(row[1])
+                        window["prop_location"].update(row[2])
+                        window["prop_price"].update(row[3])
+                        window["prop_status"].update(row[4])
+                        window["prop_client_name"].update(row[5])
+                        window["prop_client_contact"].update(row[6])
+                        window["prop_client_email"].update(row[7])
+                        window["prop_client_address"].update(row[8])
+                        if row[9]:
+                            resized = resize_image_for_display(row[9])
+                            window["photo_display"].update(data=resized)
+                            current_photo = row[9]
+                        else:
+                            window["photo_display"].update(data=sg.DEFAULT_BASE64_IMAGE)
+                            current_photo = None
+                        if row[10]:
+                            resized2 = resize_image_for_display(row[10])
+                            window["photo_display2"].update(data=resized2)
+                            current_photo2 = row[10]
                     else:
                         window["photo_display2"].update(data=sg.DEFAULT_BASE64_IMAGE)
                         current_photo2 = None
@@ -608,8 +650,9 @@ def manage_properties_window():
     window.close()
 
 def dashboard():
-    window = sg.Window("Sales Management System", create_dashboard_layout(), resizable=True, element_justification='c')
+    window = sg.Window("Sales Management System", create_dashboard_layout(), resizable=False, element_justification='c', size=(1150, 750))
     search_results = []
+    selected_prop_id = None
     due = check_due_payments()
     
     if due:
@@ -631,14 +674,40 @@ def dashboard():
                 window["prop_search_results"].update(values=[], visible=False)
                 sg.popup(f"No properties found matching '{keyword}'")
         elif isinstance(event, tuple) and event[0] == "prop_search_results":
-            row_idx = event[2][0]
-            if row_idx < len(search_results):
-                selected = search_results[row_idx]
-                prop = get_property_by_id(selected[0])
-                if prop:
-                    property_details_popup(prop)
+            if len(event) > 2 and event[2] is not None and isinstance(event[2], tuple) and event[2][0] is not None:
+                row_idx = event[2][0]
+                if row_idx < len(search_results):
+                    selected = search_results[row_idx]
+                    selected_prop_id = selected[0]
+                    prop = get_property_by_id(selected[0])
+                    if prop:
+                        try:
+                            price_str = f"\u20b1{float(prop['price']):,.2f}" if prop['price'] else "--"
+                        except (ValueError, TypeError):
+                            price_str = "--"
+                        window["-DETAIL_HEADER-"].update(visible=True)
+                        window["-DETAIL_FIELDS-"].update(visible=True)
+                        window["-DETAIL_NAME-"].update(prop["name"] or "")
+                        window["-DETAIL_LOCATION-"].update(prop["location"] or "")
+                        window["-DETAIL_PRICE-"].update(price_str)
+                        window["-DETAIL_STATUS-"].update(prop["status"] or "")
+                        window["-DETAIL_CLIENT-"].update(prop["client_name"] or "")
+                        window["-DETAIL_CONTACT-"].update(prop["client_contact"] or "")
+                        window["-DETAIL_EMAIL-"].update(prop["client_email"] or "")
+                        window["-DETAIL_ADDRESS-"].update(prop["client_address"] or "")
+                        if prop["photo"]:
+                            resized = resize_image_for_display(prop["photo"])
+                            window["-DETAIL_PHOTO1-"].update(data=resized)
+                        else:
+                            window["-DETAIL_PHOTO1-"].update(data=None)
+                        if prop["photo2"]:
+                            resized2 = resize_image_for_display(prop["photo2"])
+                            window["-DETAIL_PHOTO2-"].update(data=resized2)
+                        else:
+                            window["-DETAIL_PHOTO2-"].update(data=None)
+                        window["-DETAIL_PHOTOS-"].update(visible=True)
         elif event == "Manage Properties":
-            manage_properties_window()
+            manage_properties_window(selected_prop_id)
         elif event == "Add Payment":
             conn = sqlite3.connect("primarius.db")
             c = conn.cursor()
