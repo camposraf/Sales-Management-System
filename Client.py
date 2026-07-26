@@ -56,6 +56,12 @@ def get_property_by_id(prop_id):
         }
     return None
 
+def format_contact(value):
+    digits = "".join(c for c in value if c.isdigit())
+    if len(digits) == 12:
+        return f"{digits[:4]}-{digits[4:7]}-{digits[7:]}"
+    return value
+
 def property_details_popup(prop):
     photo_col = []
     if prop["photo"]:
@@ -188,7 +194,7 @@ def create_property_management_layout():
             [sg.Text("Property Details", font=("Helvetica", 14, "bold"), pad=(0, (5, 10)))],
             [sg.Text("Name:", font=("Helvetica", 12), size=(10,1), pad=(0, 6)), sg.Input(key="prop_name", font=("Helvetica", 12), size=(25,1), pad=(5, 6))],
             [sg.Text("Location:", font=("Helvetica", 12), size=(10,1), pad=(0, 6)), sg.Input(key="prop_location", font=("Helvetica", 12), size=(25,1), pad=(5, 6))],
-            [sg.Text("Price:", font=("Helvetica", 12), size=(10,1), pad=(0, 6)), sg.Input(key="prop_price", font=("Helvetica", 12), size=(25,1), pad=(5, 6))],
+            [sg.Text("Price:", font=("Helvetica", 12), size=(10,1), pad=(0, 6)), sg.Input(key="prop_price", default_text="\u20b1", font=("Helvetica", 12), size=(25,1), pad=(5, 6))],
             [sg.Text("Status:", font=("Helvetica", 12), size=(10,1), pad=(0, 6)), sg.Combo(["Sold", "Unsold"], key="prop_status", font=("Helvetica", 12), size=(22,1), readonly=True, pad=(5, 6))],
         ], pad=(0, 0)),
         sg.Column([
@@ -197,7 +203,6 @@ def create_property_management_layout():
             [sg.Text("Contact:", font=("Helvetica", 12), size=(10,1), pad=(0, 6)), sg.Input(key="prop_client_contact", font=("Helvetica", 12), size=(25,1), pad=(5, 6))],
             [sg.Text("Email:", font=("Helvetica", 12), size=(10,1), pad=(0, 6)), sg.Input(key="prop_client_email", font=("Helvetica", 12), size=(25,1), pad=(5, 6))],
             [sg.Text("Address:", font=("Helvetica", 12), size=(10,1), pad=(0, 6)), sg.Input(key="prop_client_address", font=("Helvetica", 12), size=(25,1), pad=(5, 6))],
-        
         ], pad=(0, 0))],
         [sg.Push(), sg.Button("Upload Photos", button_color=(sg.theme_text_color(), sg.theme_background_color()), border_width=0, font=("Helvetica", 12), pad=(3, 8)),
                     sg.Button("Update Property", button_color=(sg.theme_text_color(), sg.theme_background_color()), border_width=0, font=("Helvetica", 12), pad=(3, 8)),
@@ -553,10 +558,11 @@ def manage_properties_window(prop_id=None):
         if row:
             window["prop_name"].update(row[1] or "")
             window["prop_location"].update(row[2] or "")
-            window["prop_price"].update(row[3] or "")
+            price_val = f"\u20b1{float(row[3]):,.2f}" if row[3] else "\u20b1"
+            window["prop_price"].update(price_val)
             window["prop_status"].update(row[4] or "")
             window["prop_client_name"].update(row[5] or "")
-            window["prop_client_contact"].update(row[6] or "")
+            window["prop_client_contact"].update(format_contact(row[6] or ""))
             window["prop_client_email"].update(row[7] or "")
             window["prop_client_address"].update(row[8] or "")
             if row[9]:
@@ -598,10 +604,11 @@ def manage_properties_window(prop_id=None):
                     if row:
                         window["prop_name"].update(row[1])
                         window["prop_location"].update(row[2])
-                        window["prop_price"].update(row[3])
+                        price_val = f"\u20b1{float(row[3]):,.2f}" if row[3] else "\u20b1"
+                        window["prop_price"].update(price_val)
                         window["prop_status"].update(row[4])
                         window["prop_client_name"].update(row[5])
-                        window["prop_client_contact"].update(row[6])
+                        window["prop_client_contact"].update(format_contact(row[6] or ""))
                         window["prop_client_email"].update(row[7])
                         window["prop_client_address"].update(row[8])
                         if row[9]:
@@ -624,13 +631,15 @@ def manage_properties_window(prop_id=None):
             if not current_prop_id:
                 sg.popup("No property selected! Search and click a property first.")
                 continue
+            contact_val = format_contact(values["prop_client_contact"])
             conn = sqlite3.connect("primarius.db")
             c = conn.cursor()
+            price_val = values["prop_price"].replace("\u20b1", "").replace(",", "").strip()
             c.execute("""UPDATE properties SET name=?, location=?, price=?, status=?,
                          client_name=?, client_contact=?, client_email=?, client_address=?,
                          photo=?, photo2=? WHERE id=?""",
-                      (values["prop_name"], values["prop_location"], values["prop_price"], values["prop_status"],
-                       values["prop_client_name"], values["prop_client_contact"], values["prop_client_email"], values["prop_client_address"],
+                      (values["prop_name"], values["prop_location"], price_val, values["prop_status"],
+                       values["prop_client_name"], contact_val, values["prop_client_email"], values["prop_client_address"],
                        current_photo, current_photo2, current_prop_id))
             conn.commit()
             conn.close()
@@ -663,7 +672,7 @@ def create_add_property_layout():
             [sg.Text("Property Details", font=("Helvetica", 14, "bold"))],
             [sg.Text("Name:", font=("Helvetica", 12), size=(10,1)), sg.Input(key="prop_name", font=("Helvetica", 12), size=(25,1))],
             [sg.Text("Location:", font=("Helvetica", 12), size=(10,1)), sg.Input(key="prop_location", font=("Helvetica", 12), size=(25,1))],
-            [sg.Text("Price:", font=("Helvetica", 12), size=(10,1)), sg.Input(key="prop_price", font=("Helvetica", 12), size=(25,1))],
+            [sg.Text("Price:", font=("Helvetica", 12), size=(10,1)), sg.Input(key="prop_price", default_text="\u20b1", font=("Helvetica", 12), size=(25,1))],
             [sg.Text("Status:", font=("Helvetica", 12), size=(10,1)), sg.Combo(["Sold", "Unsold"], key="prop_status", font=("Helvetica", 12), size=(22,1), readonly=True)],
         ]),
         sg.Column([
@@ -715,9 +724,11 @@ def add_property_window():
             conn = sqlite3.connect("primarius.db")
             c = conn.cursor()
             new_id = next_id("properties", "PRP")
+            price_val = values["prop_price"].replace("\u20b1", "").replace(",", "").strip()
+            contact_val = format_contact(values["prop_client_contact"])
             c.execute("""INSERT INTO properties (id, name, location, price, status, client_name, client_contact, client_email, client_address, photo, photo2) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
-                      (new_id, values["prop_name"], values["prop_location"], values["prop_price"], values["prop_status"],
-                       values["prop_client_name"], values["prop_client_contact"], values["prop_client_email"], values["prop_client_address"],
+                      (new_id, values["prop_name"], values["prop_location"], price_val, values["prop_status"],
+                       values["prop_client_name"], contact_val, values["prop_client_email"], values["prop_client_address"],
                        current_photo, current_photo2))
             conn.commit()
             conn.close()
@@ -726,7 +737,7 @@ def add_property_window():
             current_photo2 = None
             window["prop_name"].update("")
             window["prop_location"].update("")
-            window["prop_price"].update("")
+            window["prop_price"].update("\u20b1")
             window["prop_status"].update("")
             window["prop_client_name"].update("")
             window["prop_client_contact"].update("")
