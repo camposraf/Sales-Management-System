@@ -58,9 +58,30 @@ def get_property_by_id(prop_id):
 
 def format_contact(value):
     digits = "".join(c for c in value if c.isdigit())
-    if len(digits) == 12:
-        return f"{digits[:4]}-{digits[4:7]}-{digits[7:]}"
-    return value
+    if digits.startswith("63") and len(digits) >= 12:
+        return f"+63 {digits[2:5]}-{digits[5:8]}-{digits[8:12]}"
+    elif digits.startswith("0") and len(digits) >= 11:
+        return f"+63 {digits[1:4]}-{digits[4:7]}-{digits[7:11]}"
+    elif len(digits) >= 10:
+        return f"+63 {digits[:3]}-{digits[3:6]}-{digits[6:10]}"
+    elif len(digits) > 0:
+        return f"+63 {digits}"
+    return "+63 "
+
+def strip_contact_prefix(value):
+    return value.replace("+63 ", "").replace("+63", "")
+
+def sanitize_contact_input(value):
+    if not value or not value.startswith("+63"):
+        value = "+63 " + value
+    stripped = value.replace("+63 ", "").replace("+63", "")
+    digits = "".join(c for c in stripped if c.isdigit())
+    if digits.startswith("0"):
+        digits = digits[1:]
+    digits = digits[:10]
+    if digits:
+        return f"+63 {digits[:3]}-{digits[3:6]}-{digits[6:]}"
+    return "+63 "
 
 def property_details_popup(prop):
     photo_col = []
@@ -200,7 +221,7 @@ def create_property_management_layout():
         sg.Column([
             [sg.Text("Client Information", font=("Helvetica", 14, "bold"), pad=(0, (5, 10)))],
             [sg.Text("Name:", font=("Helvetica", 12), size=(10,1), pad=(0, 6)), sg.Input(key="prop_client_name", font=("Helvetica", 12), size=(25,1), pad=(5, 6))],
-            [sg.Text("Contact:", font=("Helvetica", 12), size=(10,1), pad=(0, 6)), sg.Input(key="prop_client_contact", font=("Helvetica", 12), size=(25,1), pad=(5, 6))],
+            [sg.Text("Contact:", font=("Helvetica", 12), size=(10,1), pad=(0, 6)), sg.Input(key="prop_client_contact", default_text="+63 ", font=("Helvetica", 12), size=(25,1), pad=(5, 6), enable_events=True)],
             [sg.Text("Email:", font=("Helvetica", 12), size=(10,1), pad=(0, 6)), sg.Input(key="prop_client_email", font=("Helvetica", 12), size=(25,1), pad=(5, 6))],
             [sg.Text("Address:", font=("Helvetica", 12), size=(10,1), pad=(0, 6)), sg.Input(key="prop_client_address", font=("Helvetica", 12), size=(25,1), pad=(5, 6))],
         ], pad=(0, 0))],
@@ -579,6 +600,8 @@ def manage_properties_window(prop_id=None):
         event, values = window.read()
         if event in (sg.WIN_CLOSED, "Back"):
             break
+        if event == "prop_client_contact":
+            window["prop_client_contact"].update(sanitize_contact_input(values["prop_client_contact"]))
         if event == "Search":
             keyword = values["prop_search_keyword"].strip()
             if not keyword:
@@ -678,15 +701,15 @@ def create_add_property_layout():
         sg.Column([
             [sg.Text("Client Information", font=("Helvetica", 14, "bold"))],
             [sg.Text("Name:", font=("Helvetica", 12), size=(10,1)), sg.Input(key="prop_client_name", font=("Helvetica", 12), size=(25,1))],
-            [sg.Text("Contact:", font=("Helvetica", 12), size=(10,1)), sg.Input(key="prop_client_contact", font=("Helvetica", 12), size=(25,1))],
+            [sg.Text("Contact:", font=("Helvetica", 12), size=(10,1)), sg.Input(key="prop_client_contact", default_text="+63 ", font=("Helvetica", 12), size=(25,1), enable_events=True)],
             [sg.Text("Email:", font=("Helvetica", 12), size=(10,1)), sg.Input(key="prop_client_email", font=("Helvetica", 12), size=(25,1))],
             [sg.Text("Address:", font=("Helvetica", 12), size=(10,1)), sg.Input(key="prop_client_address", font=("Helvetica", 12), size=(25,1))],
         ])],
-        [sg.Push(), sg.Button("Upload Photos", button_color=(sg.theme_text_color(), sg.theme_background_color()), border_width=0, font=("Helvetica", 14)),
+        [sg.Push(), sg.Button("Add Property", button_color=(sg.theme_text_color(), sg.theme_background_color()), border_width=0, font=("Helvetica", 14)),
+                 sg.Button("Upload Photos", button_color=(sg.theme_text_color(), sg.theme_background_color()), border_width=0, font=("Helvetica", 14)),
                  sg.Button("Back", button_color=(sg.theme_text_color(), sg.theme_background_color()), border_width=0, font=("Helvetica", 14))],
         [sg.Image(key="photo_display", size=(200, 200)),
          sg.Image(key="photo_display2", size=(200, 200))],
-        [sg.Push(), sg.Button("Add Property", button_color=(sg.theme_text_color(), sg.theme_background_color()), border_width=0, font=("Helvetica", 14)), sg.Push()],
         
     ]
 
@@ -698,6 +721,8 @@ def add_property_window():
         event, values = window.read()
         if event in (sg.WIN_CLOSED, "Back"):
             break
+        elif event == "prop_client_contact":
+            window["prop_client_contact"].update(sanitize_contact_input(values["prop_client_contact"]))
         elif event == "Upload Photos":
             raw = sg.popup_get_file("Select up to 2 Photos", multiple_files=True, file_types=(("PNG Files", "*.png"), ("GIF Files", "*.gif"), ("All Files", "*.*")))
             if raw:
@@ -740,7 +765,7 @@ def add_property_window():
             window["prop_price"].update("\u20b1")
             window["prop_status"].update("")
             window["prop_client_name"].update("")
-            window["prop_client_contact"].update("")
+            window["prop_client_contact"].update("+63 ")
             window["prop_client_email"].update("")
             window["prop_client_address"].update("")
             window["photo_display"].update(data=None)
