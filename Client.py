@@ -121,8 +121,8 @@ def property_details_popup(prop):
 
 def create_dashboard_layout():
     prop_tab = sg.Tab("Properties", [
-        [sg.Push(), sg.Button("Manage Properties", button_color=(sg.theme_text_color(), sg.theme_background_color()), border_width=0, font=("Helvetica", 16)),
-         sg.Button("Add Property", button_color=(sg.theme_text_color(), sg.theme_background_color()), border_width=0, font=("Helvetica", 16)), sg.Push()],
+        [sg.Push(), sg.Button("See All Properties", button_color=(sg.theme_text_color(), sg.theme_background_color()), border_width=0, font=("Helvetica", 14)),
+         sg.Button("Add Property", button_color=(sg.theme_text_color(), sg.theme_background_color()), border_width=0, font=("Helvetica", 14)), sg.Push()],
         [sg.Text("Search:", font=("Helvetica", 16)), sg.Input(key="search_keyword", font=("Helvetica", 16), size=(30,1), expand_x=True),
          sg.Button("Search", button_color=(sg.theme_text_color(), sg.theme_background_color()), border_width=0, font=("Helvetica", 14))],
         [sg.Table(
@@ -137,6 +137,7 @@ def create_dashboard_layout():
             enable_click_events=True,
             expand_x=True
         )],
+        [sg.Push(), sg.Button("Manage Property", button_color=(sg.theme_text_color(), sg.theme_background_color()), border_width=0, font=("Helvetica", 14)), sg.Push()],
         [sg.HorizontalSeparator()],
         [sg.Text("SELECTED PROPERTY", font=("Helvetica", 14, "bold"), visible=False, key="-DETAIL_HEADER-")],
         [sg.Column([
@@ -194,7 +195,7 @@ def create_dashboard_layout():
 
 def create_property_management_layout():
     return [
-        [sg.Text("Manage Properties", font=("Helvetica", 20), justification="center", pad=(0, (10, 15)))],
+        [sg.Text("Manage Property", font=("Helvetica", 20), justification="center", pad=(0, (10, 15)))],
         [sg.Text("Search:", font=("Helvetica", 16), pad=(0, 5)), sg.Input(key="prop_search_keyword", font=("Helvetica", 16), size=(30,1), expand_x=True, pad=(5, 5)),
          sg.Button("Search", button_color=(sg.theme_text_color(), sg.theme_background_color()), border_width=0, font=("Helvetica", 14), pad=(5, 5))],
         [sg.Table(
@@ -564,7 +565,7 @@ def login_window():
     window.close()
 
 def manage_properties_window(prop_id=None):
-    window = sg.Window("Manage Properties", create_property_management_layout(), resizable=False, element_justification='c', size=(950, 750), finalize=True)
+    window = sg.Window("Manage Property", create_property_management_layout(), resizable=False, element_justification='c', size=(950, 750), finalize=True)
     prop_search_cache = []
     current_prop_id = None
     current_photo = None
@@ -705,11 +706,11 @@ def create_add_property_layout():
             [sg.Text("Email:", font=("Helvetica", 12), size=(10,1)), sg.Input(key="prop_client_email", font=("Helvetica", 12), size=(25,1))],
             [sg.Text("Address:", font=("Helvetica", 12), size=(10,1)), sg.Input(key="prop_client_address", font=("Helvetica", 12), size=(25,1))],
         ])],
-        [sg.Push(), sg.Button("Add Property", button_color=(sg.theme_text_color(), sg.theme_background_color()), border_width=0, font=("Helvetica", 14)),
-                 sg.Button("Upload Photos", button_color=(sg.theme_text_color(), sg.theme_background_color()), border_width=0, font=("Helvetica", 14)),
+        [sg.Push(), sg.Button("Upload Photos", button_color=(sg.theme_text_color(), sg.theme_background_color()), border_width=0, font=("Helvetica", 14)),
                  sg.Button("Back", button_color=(sg.theme_text_color(), sg.theme_background_color()), border_width=0, font=("Helvetica", 14))],
         [sg.Image(key="photo_display", size=(200, 200)),
          sg.Image(key="photo_display2", size=(200, 200))],
+        [sg.Push(), sg.Button("Add Property", button_color=(sg.theme_text_color(), sg.theme_background_color()), border_width=0, font=("Helvetica", 14)), sg.Push()],
         
     ]
 
@@ -784,6 +785,14 @@ def dashboard():
         event, values = window.read()
         if event in (sg.WIN_CLOSED, "Logout"):
             break
+        elif event == "See All Properties":
+            search_results = search_properties("")
+            if search_results:
+                display = [[r[0], r[1] or "", r[2] or "", f"\u20b1{float(r[3]):,.2f}" if r[3] else "--", r[4] or "", r[5] or ""] for r in search_results]
+                window["prop_search_results"].update(values=display, visible=True)
+            else:
+                window["prop_search_results"].update(values=[], visible=False)
+                sg.popup("No properties found.")
         elif event == "Search":
             keyword = values["search_keyword"].strip()
             if not keyword:
@@ -829,7 +838,7 @@ def dashboard():
                         else:
                             window["-DETAIL_PHOTO2-"].update(data=None)
                         window["-DETAIL_PHOTOS-"].update(visible=True)
-        elif event == "Manage Properties":
+        elif event == "Manage Property":
             manage_properties_window(selected_prop_id)
         elif event == "Add Property":
             add_property_window()
