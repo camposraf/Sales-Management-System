@@ -11,11 +11,18 @@ sg.theme("DarkBlue")
 def next_id(table, prefix):
     conn = sqlite3.connect("primarius.db")
     c = conn.cursor()
+    c.execute("""CREATE TABLE IF NOT EXISTS deleted_ids(id TEXT PRIMARY KEY)""")
     c.execute(f"SELECT id FROM {table} WHERE id LIKE '{prefix}-%'")
     rows = c.fetchall()
-    conn.close()
     nums = [int(r[0].split("-")[1]) for r in rows if r[0] and "-" in r[0]]
     n = max(nums) + 1 if nums else 1
+    while True:
+        candidate = f"{prefix}-{n:03d}"
+        c.execute("SELECT id FROM deleted_ids WHERE id=?", (candidate,))
+        if c.fetchone() is None:
+            break
+        n += 1
+    conn.close()
     return f"{prefix}-{n:03d}"
 
 def resize_image_for_display(img_bytes, max_w=240, max_h=240):
@@ -38,6 +45,18 @@ def search_properties(keyword):
                  WHERE name LIKE ? OR location LIKE ? OR status LIKE ? 
                  OR client_name LIKE ? OR id LIKE ?""",
               (q, q, q, q, q))
+    rows = c.fetchall()
+    conn.close()
+    return rows
+
+def search_payments(keyword):
+    conn = sqlite3.connect("primarius.db")
+    c = conn.cursor()
+    q = f"%{keyword}%"
+    c.execute("""SELECT id, property_id, amount, date, status 
+                 FROM payments 
+                 WHERE id LIKE ? OR property_id LIKE ? OR status LIKE ? OR date LIKE ?""",
+              (q, q, q, q))
     rows = c.fetchall()
     conn.close()
     return rows
@@ -125,19 +144,22 @@ def create_dashboard_layout():
          sg.Button("Add Property", button_color=(sg.theme_text_color(), sg.theme_background_color()), border_width=0, font=("Helvetica", 14)), sg.Push()],
         [sg.Text("Search:", font=("Helvetica", 16)), sg.Input(key="search_keyword", font=("Helvetica", 16), size=(30,1), expand_x=True),
          sg.Button("Search", button_color=(sg.theme_text_color(), sg.theme_background_color()), border_width=0, font=("Helvetica", 14))],
-        [sg.Table(
-            values=[["", "", "", "", "", ""]],
-            headings=["ID", "Name", "Location", "Price", "Status", "Client"],
-            key="prop_search_results",
-            font=("Helvetica", 12),
-            justification="left",
-            num_rows=6,
-            auto_size_columns=True,
-            visible=False,
-            enable_click_events=True,
-            expand_x=True
-        )],
-        [sg.Push(), sg.Button("Manage Property", button_color=(sg.theme_text_color(), sg.theme_background_color()), border_width=0, font=("Helvetica", 14)), sg.Push()],
+        [sg.pin(sg.Column([
+            [sg.Table(
+                values=[["", "", "", "", "", ""]],
+                headings=["ID", "Name", "Location", "Price", "Status", "Client"],
+                key="prop_search_results",
+                font=("Helvetica", 12),
+                justification="left",
+                num_rows=6,
+                auto_size_columns=True,
+                visible=False,
+                enable_click_events=True,
+                expand_x=True
+            )],
+        ], key="-PROP_TABLE_WRAP-", expand_x=True, pad=(0,0)), expand_x=True)],
+        [sg.Push(), sg.Button("Manage Property", button_color=(sg.theme_text_color(), sg.theme_background_color()), border_width=0, font=("Helvetica", 14)),
+         sg.Button("Delete Property", button_color=(sg.theme_text_color(), sg.theme_background_color()), border_width=0, font=("Helvetica", 14)), sg.Push()],
         [sg.HorizontalSeparator()],
         [sg.Text("SELECTED PROPERTY", font=("Helvetica", 14, "bold"), visible=False, key="-DETAIL_HEADER-")],
         [sg.Column([
@@ -155,24 +177,62 @@ def create_dashboard_layout():
         ], visible=False, key="-DETAIL_PHOTOS-")],
     ])
     pay_tab = sg.Tab("Payments", [
-        [sg.Column([
-            [sg.Button("Add Payment", button_color=(sg.theme_text_color(), sg.theme_background_color()), border_width=0, font=("Helvetica", 20))],
-            [sg.Text("", size=(1,1))],
-            [sg.Button("View Payments", button_color=(sg.theme_text_color(), sg.theme_background_color()), border_width=0, font=("Helvetica", 20))],
-            [sg.Text("", size=(1,1))],
-            [sg.Button("Setup Plan", button_color=(sg.theme_text_color(), sg.theme_background_color()), border_width=0, font=("Helvetica", 20))],
-            [sg.Text("", size=(1,1))],
-            [sg.Button("View Installments", button_color=(sg.theme_text_color(), sg.theme_background_color()), border_width=0, font=("Helvetica", 20))],
-            [sg.Text("", size=(1,1))],
-            [sg.Button("Due Payments", button_color=(sg.theme_text_color(), sg.theme_background_color()), border_width=0, font=("Helvetica", 20))],
-        ]),
-        sg.VerticalSeparator(),
-        sg.Column([
-            [sg.Text("Property ID", font=("Helvetica", 20), size=(18,1)), sg.Input(key="pay_property_id", font=("Helvetica", 20), size=(12,1))],
-            [sg.Text("Amount", font=("Helvetica", 20), size=(18,1)), sg.Input(key="pay_amount", font=("Helvetica", 20), size=(12,1))],
-            [sg.Text("Date (YYYY-MM-DD)", font=("Helvetica", 20), size=(18,1)), sg.Input(key="pay_date", font=("Helvetica", 20), size=(12,1))],
-            [sg.Text("Status", font=("Helvetica", 20), size=(18,1)), sg.Combo(["Paid", "Pending", "Overdue"], key="pay_status", font=("Helvetica", 20), size=(12,1))],
-        ])],
+        [sg.Push(), sg.Button("See All Payments", button_color=(sg.theme_text_color(), sg.theme_background_color()), border_width=0, font=("Helvetica", 14)),
+         sg.Button("New Payment / Plan", button_color=(sg.theme_text_color(), sg.theme_background_color()), border_width=0, font=("Helvetica", 14)), sg.Push()],
+        [sg.Text("Search:", font=("Helvetica", 16)), sg.Input(key="pay_search_keyword", font=("Helvetica", 16), size=(30,1), expand_x=True),
+         sg.Button("Search", button_color=(sg.theme_text_color(), sg.theme_background_color()), border_width=0, font=("Helvetica", 14), key="Pay Search")],
+        [sg.pin(sg.Column([
+            [sg.Table(
+                values=[["", "", "", "", ""]],
+                headings=["ID", "Property ID", "Amount", "Date", "Status"],
+                key="pay_search_results",
+                font=("Helvetica", 12),
+                justification="left",
+                num_rows=6,
+                auto_size_columns=True,
+                visible=False,
+                enable_click_events=True,
+                expand_x=True
+            )],
+        ], key="-PAY_TABLE_WRAP-", expand_x=True, pad=(0,0)), expand_x=True)],
+        [sg.pin(sg.Column([
+            [sg.Text("DUE PAYMENTS", font=("Helvetica", 14, "bold"), visible=False, key="-DUE_HEADER-")],
+            [sg.Table(
+                values=[["", "", "", "", "", "", ""]],
+                headings=["ID", "Client", "Property", "#", "Due Date", "Amount", "Status"],
+                key="due_pay_results",
+                font=("Helvetica", 12),
+                justification="left",
+                num_rows=5,
+                auto_size_columns=True,
+                visible=False,
+                enable_click_events=True,
+                expand_x=True
+            )],
+        ], key="-DUE_WRAP-", expand_x=True, pad=(0,0)), expand_x=True)],
+        [sg.Push(), sg.Button("View Installments", button_color=(sg.theme_text_color(), sg.theme_background_color()), border_width=0, font=("Helvetica", 14)),
+         sg.Button("Due Payments", button_color=(sg.theme_text_color(), sg.theme_background_color()), border_width=0, font=("Helvetica", 14)), sg.Push()],
+        [sg.HorizontalSeparator()],
+        [sg.pin(sg.Column([
+            [sg.Text("NEW PAYMENT / PLAN", font=("Helvetica", 14, "bold"), visible=False, key="-PAY_HEADER-")],
+            [sg.Column([
+                [sg.Text("Mode:", font=("Helvetica", 12), size=(12,1), pad=(0, 6)),
+                 sg.Combo(["Select Mode", "Record Payment", "Setup Plan"], key="pay_mode", default_value="Select Mode", enable_events=True, font=("Helvetica", 12), size=(22,1), readonly=True, pad=(5, 6))],
+                [sg.Text("Property ID:", font=("Helvetica", 12), size=(12,1), pad=(0, 6)), sg.Input(key="pay_property_id", font=("Helvetica", 12), size=(25,1), pad=(5, 6))],
+            ], visible=False, key="-PAY_FIELDS-")],
+            [sg.Column([
+                [sg.Text("Amount:", font=("Helvetica", 12), size=(12,1), pad=(0, 6)), sg.Input(key="pay_amount", default_text="\u20b1", font=("Helvetica", 12), size=(25,1), pad=(5, 6))],
+                [sg.Text("Date (YYYY-MM-DD):", font=("Helvetica", 12), size=(12,1), pad=(0, 6)), sg.Input(key="pay_date", font=("Helvetica", 12), size=(25,1), pad=(5, 6))],
+                [sg.Text("Status:", font=("Helvetica", 12), size=(12,1), pad=(0, 6)), sg.Combo(["Paid", "Pending", "Overdue"], key="pay_status", font=("Helvetica", 12), size=(22,1), readonly=True, pad=(5, 6))],
+            ], visible=False, key="-PAY_PAYMENT_FIELDS-")],
+            [sg.Column([
+                [sg.Text("Total Amount:", font=("Helvetica", 12), size=(12,1), pad=(0, 6)), sg.Input(key="pay_total_amount", default_text="\u20b1", font=("Helvetica", 12), size=(25,1), pad=(5, 6))],
+                [sg.Text("Down Payment:", font=("Helvetica", 12), size=(12,1), pad=(0, 6)), sg.Input(key="pay_down_payment", default_text="\u20b1", font=("Helvetica", 12), size=(25,1), pad=(5, 6))],
+                [sg.Text("Frequency:", font=("Helvetica", 12), size=(12,1), pad=(0, 6)), sg.Combo(["6 Months", "12 Months"], key="pay_frequency", default_value="12 Months", font=("Helvetica", 12), size=(22,1), readonly=True, pad=(5, 6))],
+                [sg.Text("Start Date (YYYY-MM-DD):", font=("Helvetica", 12), size=(12,1), pad=(0, 6)), sg.Input(key="pay_start_date", font=("Helvetica", 12), size=(25,1), pad=(5, 6))],
+            ], visible=False, key="-PAY_PLAN_FIELDS-")],
+            [sg.Push(), sg.Button("Save Payment", key="save_pay_btn", button_color=(sg.theme_text_color(), sg.theme_background_color()), border_width=0, font=("Helvetica", 14)), sg.Push()],
+        ], key="-PAY_FORM_WRAP-", expand_x=True, pad=(0,0)), expand_x=True)],
     ])
     rpt_tab = sg.Tab("Reports", [
         [sg.Column([
@@ -284,21 +344,33 @@ def create_payment_plan_layout():
 
 def create_installments_layout():
     return [
-        [sg.Text("Sales Management System", font=("Helvetica", 20), justification="center")],
-        [sg.Text("", size=(2,2))],
+        [sg.Text("Installments", font=("Helvetica", 20), justification="center", pad=(0, (10, 15)))],
+        [sg.Push(), sg.Button("Show All Pending", button_color=(sg.theme_text_color(), sg.theme_background_color()), border_width=0, font=("Helvetica", 14)),
+         sg.Button("Show All", button_color=(sg.theme_text_color(), sg.theme_background_color()), border_width=0, font=("Helvetica", 14)),
+         sg.Button("Back", button_color=(sg.theme_text_color(), sg.theme_background_color()), border_width=0, font=("Helvetica", 14)), sg.Push()],
+        [sg.Table(
+            values=[["", "", "", "", "", "", ""]],
+            headings=["ID", "Client", "Property", "#", "Due Date", "Amount", "Status"],
+            key="ins_results",
+            font=("Helvetica", 12),
+            justification="left",
+            num_rows=8,
+            auto_size_columns=True,
+            visible=False,
+            enable_click_events=True,
+            expand_x=True
+        )],
+        [sg.HorizontalSeparator()],
         [sg.Column([
-            [sg.Button("Show All Pending", button_color=(sg.theme_text_color(), sg.theme_background_color()), border_width=0, font=("Helvetica", 20))],
-            [sg.Text("", size=(1,1))],
-            [sg.Button("Check Due Payments", button_color=(sg.theme_text_color(), sg.theme_background_color()), border_width=0, font=("Helvetica", 20))],
-            [sg.Text("", size=(1,1))],
-            [sg.Button("Mark as Paid", button_color=(sg.theme_text_color(), sg.theme_background_color()), border_width=0, font=("Helvetica", 20))],
-            [sg.Text("", size=(1,1))],
-            [sg.Button("Back", button_color=(sg.theme_text_color(), sg.theme_background_color()), border_width=0, font=("Helvetica", 20))],
-        ]),
-        sg.VerticalSeparator(),
-        sg.Column([
-            [sg.Text("Installment ID to pay:", font=("Helvetica", 20), size=(22,1)), sg.Input(key="installment_id", font=("Helvetica", 20), size=(10,1))],
-        ])],
+            [sg.Text("Installment ID:", font=("Helvetica", 12), size=(14,1), pad=(0, 6)), sg.Text("", key="ins_id", font=("Helvetica", 12, "bold"), size=(22,1), pad=(5, 6)),
+             sg.Text("Client Name:", font=("Helvetica", 12), size=(14,1), pad=(0, 6)), sg.Text("", key="ins_client", font=("Helvetica", 12, "bold"), size=(25,1), pad=(5, 6))],
+            [sg.Text("Property Name:", font=("Helvetica", 12), size=(14,1), pad=(0, 6)), sg.Text("", key="ins_property", font=("Helvetica", 12, "bold"), size=(22,1), pad=(5, 6)),
+             sg.Text("Installment #:", font=("Helvetica", 12), size=(14,1), pad=(0, 6)), sg.Text("", key="ins_num", font=("Helvetica", 12, "bold"), size=(25,1), pad=(5, 6))],
+            [sg.Text("Due Date:", font=("Helvetica", 12), size=(14,1), pad=(0, 6)), sg.Text("", key="ins_due", font=("Helvetica", 12, "bold"), size=(22,1), pad=(5, 6)),
+             sg.Text("Amount:", font=("Helvetica", 12), size=(14,1), pad=(0, 6)), sg.Text("", key="ins_amount", font=("Helvetica", 12, "bold"), size=(25,1), pad=(5, 6))],
+            [sg.Text("Status:", font=("Helvetica", 12), size=(14,1), pad=(0, 6)), sg.Text("", key="ins_status", font=("Helvetica", 12, "bold"), size=(22,1), pad=(5, 6))],
+        ], visible=False, key="-INS_DETAILS-")],
+        [sg.Push(), sg.Button("Record Payment", button_color=(sg.theme_text_color(), sg.theme_background_color()), border_width=0, font=("Helvetica", 14)), sg.Push()],
     ]
 
 def init_db():
@@ -373,6 +445,9 @@ def init_db():
         FOREIGN KEY(plan_id) REFERENCES payment_plans(id),
         FOREIGN KEY(property_id) REFERENCES properties(id)
     )""")
+    c.execute("""CREATE TABLE IF NOT EXISTS deleted_ids(
+        id TEXT PRIMARY KEY
+    )""")
     conn.commit()
     conn.close()
 
@@ -392,7 +467,7 @@ def check_due_payments():
     conn = sqlite3.connect("primarius.db")
     c = conn.cursor()
     today = datetime.now().strftime("%Y-%m-%d")
-    c.execute("""SELECT pi.id, p.client_name, pi.installment_number, pi.due_date, pi.amount, p.name
+    c.execute("""SELECT pi.id, p.client_name, pi.installment_number, pi.due_date, pi.amount, p.name, pi.property_id
                  FROM payment_installments pi
                  JOIN properties p ON pi.property_id = p.id
                  WHERE pi.due_date <= ? AND pi.status = 'Pending'""", (today,))
@@ -489,52 +564,117 @@ def payment_plan_window():
     window.close()
 
 def installments_window():
-    window = sg.Window("Installments", create_installments_layout(), resizable=True, element_justification='c', size=(650, 420))
+    window = sg.Window("Installments", create_installments_layout(), resizable=True, element_justification='c', size=(900, 600), finalize=True)
+    ins_cache = []
+    selected_ins_id = None
+    filter_pending = False
+    today = datetime.now().strftime("%Y-%m-%d")
+    sort_col = None
+    sort_asc = True
+    def apply_sort():
+        nonlocal ins_cache, sort_col, sort_asc
+        if sort_col is None or not ins_cache:
+            return
+        def key_fn(r):
+            v = r[sort_col]
+            return (v is None, "" if v is None else v)
+        ins_cache.sort(key=key_fn, reverse=not sort_asc)
+        display = [[r[0], r[1] or "", r[2] or "", r[3], r[4] or "", f"\u20b1{float(r[5]):,.2f}" if r[5] else "--", status_display(r)] for r in ins_cache]
+        window["ins_results"].update(values=display, visible=True)
+    def status_display(r):
+        st = r[6] or ""
+        if st == "Pending" and r[4] and r[4] < today:
+            st = "OVERDUE"
+        return st
+    def load_installments(pending_only):
+        nonlocal ins_cache, sort_col, sort_asc
+        conn = sqlite3.connect("primarius.db")
+        c = conn.cursor()
+        if pending_only:
+            c.execute("""SELECT pi.id, p.client_name, p.name, pi.installment_number, pi.due_date, pi.amount, pi.status
+                         FROM payment_installments pi
+                         JOIN properties p ON pi.property_id = p.id
+                         WHERE pi.status = 'Pending' ORDER BY pi.due_date""")
+        else:
+            c.execute("""SELECT pi.id, p.client_name, p.name, pi.installment_number, pi.due_date, pi.amount, pi.status
+                         FROM payment_installments pi
+                         JOIN properties p ON pi.property_id = p.id
+                         ORDER BY pi.due_date""")
+        ins_cache = c.fetchall()
+        conn.close()
+        sort_col = None
+        sort_asc = True
+        if ins_cache:
+            display = [[r[0], r[1] or "", r[2] or "", r[3], r[4] or "", f"\u20b1{float(r[5]):,.2f}" if r[5] else "--", status_display(r)] for r in ins_cache]
+            window["ins_results"].update(values=display, visible=True)
+        else:
+            window["ins_results"].update(values=[], visible=False)
+            window["-INS_DETAILS-"].update(visible=False)
+            sg.popup("No installments found.")
     while True:
         event, values = window.read()
         if event in (sg.WIN_CLOSED, "Back"):
             break
         if event == "Show All Pending":
-            conn = sqlite3.connect("primarius.db")
-            c = conn.cursor()
-            c.execute("""SELECT pi.id, p.client_name, p.name, pi.installment_number, pi.due_date, pi.amount, pi.status
-                         FROM payment_installments pi
-                         JOIN properties p ON pi.property_id = p.id
-                         WHERE pi.status = 'Pending' ORDER BY pi.due_date""")
-            rows = c.fetchall()
-            conn.close()
-            if rows:
-                sg.popup_scrolled("Pending Installments", *[f"{r[0]} | {r[1]} | {r[2]} | #{r[3]} | Due: {r[4]} | \u20b1{r[5]:,.2f} | {r[6]}" for r in rows])
+            filter_pending = True
+            load_installments(True)
+        elif event == "Show All":
+            filter_pending = False
+            load_installments(False)
+        elif isinstance(event, tuple) and event[0] == "ins_results":
+            if len(event) > 2 and event[2] is not None and isinstance(event[2], tuple):
+                row_idx, col_idx = event[2][0], event[2][1]
+                if row_idx is None or row_idx < 0:
+                    if col_idx is not None and col_idx >= 0:
+                        if col_idx == sort_col:
+                            sort_asc = not sort_asc
+                        else:
+                            sort_col = col_idx
+                            sort_asc = True
+                        apply_sort()
+                elif row_idx < len(ins_cache):
+                    sel = ins_cache[row_idx]
+                    selected_ins_id = sel[0]
+                    window["-INS_DETAILS-"].update(visible=True)
+                    window["ins_id"].update(sel[0])
+                    window["ins_client"].update(sel[1] or "")
+                    window["ins_property"].update(sel[2] or "")
+                    window["ins_num"].update(sel[3])
+                    window["ins_due"].update(sel[4] or "")
+                    window["ins_amount"].update(f"\u20b1{float(sel[5]):,.2f}" if sel[5] else "--")
+                    status = sel[6] or ""
+                    if sel[6] == "Pending" and sel[4] and sel[4] < today:
+                        status = "OVERDUE"
+                    elif sel[6] == "Pending" and sel[4] and sel[4] == today:
+                        status = "DUE TODAY"
+                    window["ins_status"].update(status)
+        elif event == "Record Payment":
+            if not selected_ins_id:
+                sg.popup("Select an installment from the table first.")
             else:
-                sg.popup("No pending installments")
-        if event == "Check Due Payments":
-            due = check_due_payments()
-            if due:
-                sg.popup_scrolled("DUE PAYMENTS", *[f"{r[0]} | {r[1]} | {r[5]} |  #{r[2]}  | Due: {r[3]}  |  \u20b1{r[4]:,.2f}" for r in due])
-            else:
-                sg.popup("No due payments!")
-        if event == "Mark as Paid":
-            try:
-                conn = sqlite3.connect("primarius.db")
-                c = conn.cursor()
-                today = datetime.now().strftime("%Y-%m-%d")
-                c.execute("SELECT property_id, amount FROM payment_installments WHERE id=?",
-                          (values["installment_id"],))
-                row = c.fetchone()
-                if not row:
-                    sg.popup("No installment found with that ID")
-                else:
-                    prop_id, amount = row
-                    c.execute("""UPDATE payment_installments SET status='Paid', paid_date=? WHERE id=?""",
-                              (today, values["installment_id"]))
-                    pay_id = next_id("payments", "PAY")
-                    c.execute("INSERT INTO payments (id, property_id, amount, date, status) VALUES (?, ?, ?, ?, ?)",
-                              (pay_id, prop_id, amount, today, "Paid"))
-                    conn.commit()
-                    sg.popup("Installment marked as paid! Payment recorded in ledger.")
-                conn.close()
-            except Exception as e:
-                sg.popup(f"Error: {e}")
+                try:
+                    conn = sqlite3.connect("primarius.db")
+                    c = conn.cursor()
+                    c.execute("SELECT property_id, amount FROM payment_installments WHERE id=?",
+                              (selected_ins_id,))
+                    row = c.fetchone()
+                    if not row:
+                        sg.popup("No installment found with that ID")
+                    else:
+                        prop_id, amount = row
+                        c.execute("""UPDATE payment_installments SET status='Paid', paid_date=? WHERE id=?""",
+                                  (today, selected_ins_id))
+                        pay_id = next_id("payments", "PAY")
+                        c.execute("INSERT INTO payments (id, property_id, amount, date, status) VALUES (?, ?, ?, ?, ?)",
+                                  (pay_id, prop_id, amount, today, "Paid"))
+                        conn.commit()
+                        sg.popup("Installment marked as paid! Payment recorded in ledger.")
+                        selected_ins_id = None
+                        window["-INS_DETAILS-"].update(visible=False)
+                        load_installments(filter_pending)
+                    conn.close()
+                except Exception as e:
+                    sg.popup(f"Error: {e}")
     window.close()
 
 def login_window():
@@ -774,25 +914,50 @@ def add_property_window():
     window.close()
 
 def dashboard():
-    window = sg.Window("Sales Management System", create_dashboard_layout(), resizable=False, element_justification='c', size=(1150, 750))
+    window = sg.Window("Sales Management System", create_dashboard_layout(), resizable=False, element_justification='c', size=(1150, 750), finalize=True)
     search_results = []
+    pay_search_cache = []
+    due_pay_cache = []
+    pending_due_ins_id = None
     selected_prop_id = None
-    due = check_due_payments()
-    
-    if due:
-        window["due_alert"].update(f"  {len(due)} due payment(s) \u2014 go to Payments tab")
+    def set_pay_mode(mode):
+        window["pay_mode"].update(mode)
+        if mode == "Record Payment":
+            window["-PAY_PAYMENT_FIELDS-"].update(visible=True)
+            window["-PAY_PLAN_FIELDS-"].update(visible=False)
+            window["save_pay_btn"].update("Save Payment", disabled=False)
+        elif mode == "Setup Plan":
+            window["-PAY_PAYMENT_FIELDS-"].update(visible=False)
+            window["-PAY_PLAN_FIELDS-"].update(visible=True)
+            window["save_pay_btn"].update("Save Plan", disabled=False)
+        else:
+            window["-PAY_PAYMENT_FIELDS-"].update(visible=False)
+            window["-PAY_PLAN_FIELDS-"].update(visible=False)
+            window["save_pay_btn"].update(disabled=True)
+    def refresh_due_alert():
+        due = check_due_payments()
+        if due:
+            window["due_alert"].update(f"  {len(due)} due payment(s) \u2014 go to Payments tab")
+        else:
+            window["due_alert"].update("")
+    refresh_due_alert()
+    set_pay_mode("Select Mode")
     while True:
         event, values = window.read()
         if event in (sg.WIN_CLOSED, "Logout"):
             break
         elif event == "See All Properties":
-            search_results = search_properties("")
-            if search_results:
-                display = [[r[0], r[1] or "", r[2] or "", f"\u20b1{float(r[3]):,.2f}" if r[3] else "--", r[4] or "", r[5] or ""] for r in search_results]
-                window["prop_search_results"].update(values=display, visible=True)
+            if window["-PROP_TABLE_WRAP-"].visible:
+                window["-PROP_TABLE_WRAP-"].update(visible=False)
             else:
-                window["prop_search_results"].update(values=[], visible=False)
-                sg.popup("No properties found.")
+                search_results = search_properties("")
+                if search_results:
+                    display = [[r[0], r[1] or "", r[2] or "", f"\u20b1{float(r[3]):,.2f}" if r[3] else "--", r[4] or "", r[5] or ""] for r in search_results]
+                    window["prop_search_results"].update(values=display, visible=True)
+                    window["-PROP_TABLE_WRAP-"].update(visible=True)
+                else:
+                    window["prop_search_results"].update(values=[], visible=False)
+                    sg.popup("No properties found.")
         elif event == "Search":
             keyword = values["search_keyword"].strip()
             if not keyword:
@@ -802,6 +967,7 @@ def dashboard():
             if search_results:
                 display = [[r[0], r[1] or "", r[2] or "", f"\u20b1{r[3]:,.2f}", r[4] or "", r[5] or ""] for r in search_results]
                 window["prop_search_results"].update(values=display, visible=True)
+                window["-PROP_TABLE_WRAP-"].update(visible=True)
             else:
                 window["prop_search_results"].update(values=[], visible=False)
                 sg.popup(f"No properties found matching '{keyword}'")
@@ -840,33 +1006,209 @@ def dashboard():
                         window["-DETAIL_PHOTOS-"].update(visible=True)
         elif event == "Manage Property":
             manage_properties_window(selected_prop_id)
+        elif event == "Delete Property":
+            if not selected_prop_id:
+                sg.popup("No property selected! Search and click a property first.")
+            else:
+                confirm = sg.popup_yes_no(f"Delete property {selected_prop_id} and all related records?")
+                if confirm == "Yes":
+                    conn = sqlite3.connect("primarius.db")
+                    c = conn.cursor()
+                    c.execute("DELETE FROM payment_installments WHERE property_id=?", (selected_prop_id,))
+                    c.execute("DELETE FROM payment_plans WHERE property_id=?", (selected_prop_id,))
+                    c.execute("DELETE FROM payments WHERE property_id=?", (selected_prop_id,))
+                    c.execute("DELETE FROM properties WHERE id=?", (selected_prop_id,))
+                    c.execute("INSERT OR IGNORE INTO deleted_ids (id) VALUES (?)", (selected_prop_id,))
+                    conn.commit()
+                    conn.close()
+                    sg.popup("Property deleted successfully!")
+                    search_results = []
+                    window["-PROP_TABLE_WRAP-"].update(visible=False)
+                    window["-DETAIL_HEADER-"].update(visible=False)
+                    window["-DETAIL_FIELDS-"].update(visible=False)
+                    window["-DETAIL_PHOTOS-"].update(visible=False)
         elif event == "Add Property":
             add_property_window()
-        elif event == "Add Payment":
+        elif event == "See All Payments":
+            if window["-PAY_TABLE_WRAP-"].visible:
+                window["-PAY_TABLE_WRAP-"].update(visible=False)
+            else:
+                pay_search_cache = search_payments("")
+                if pay_search_cache:
+                    display = [[r[0], r[1] or "", f"\u20b1{float(r[2]):,.2f}" if r[2] else "--", r[3] or "", r[4] or ""] for r in pay_search_cache]
+                    window["pay_search_results"].update(values=display, visible=True)
+                    window["-PAY_TABLE_WRAP-"].update(visible=True)
+                else:
+                    window["pay_search_results"].update(values=[], visible=False)
+                    sg.popup("No payments found.")
+        elif event == "Pay Search":
+            keyword = values["pay_search_keyword"].strip()
+            if not keyword:
+                pay_search_cache = search_payments("")
+            else:
+                pay_search_cache = search_payments(keyword)
+            if pay_search_cache:
+                display = [[r[0], r[1] or "", f"\u20b1{float(r[2]):,.2f}" if r[2] else "--", r[3] or "", r[4] or ""] for r in pay_search_cache]
+                window["pay_search_results"].update(values=display, visible=True)
+                window["-PAY_TABLE_WRAP-"].update(visible=True)
+            else:
+                window["pay_search_results"].update(values=[], visible=False)
+                sg.popup(f"No payments found matching '{keyword}'")
+        elif event == "New Payment / Plan":
+            if window["-PAY_FORM_WRAP-"].visible:
+                window["-PAY_FORM_WRAP-"].update(visible=False)
+            else:
+                window["-PAY_FORM_WRAP-"].update(visible=True)
+                window["-PAY_HEADER-"].update(visible=True)
+                window["-PAY_FIELDS-"].update(visible=True)
+                set_pay_mode("Select Mode")
+        elif event == "pay_mode":
+            set_pay_mode(values["pay_mode"])
+        elif event == "save_pay_btn":
+            prop_id = values["pay_property_id"].strip()
+            if values["pay_mode"] == "Select Mode":
+                sg.popup("Select a mode first.")
+                continue
+            if not prop_id:
+                sg.popup("Enter a Property ID")
+                continue
             conn = sqlite3.connect("primarius.db")
             c = conn.cursor()
-            c.execute("INSERT INTO payments (id, property_id, amount, date, status) VALUES (?, ?, ?, ?, ?)",
-                      (next_id("payments", "PAY"), values["pay_property_id"], values["pay_amount"], values["pay_date"], values["pay_status"]))
-            conn.commit()
-            conn.close()
-            sg.popup("Payment added successfully!")
+            c.execute("SELECT id FROM properties WHERE id=?", (prop_id,))
+            if not c.fetchone():
+                conn.close()
+                sg.popup(f"Property ID '{prop_id}' not found.")
+                continue
+            if values["pay_mode"] == "Record Payment":
+                amount_val = values["pay_amount"].replace("\u20b1", "").replace(",", "").strip()
+                if not amount_val:
+                    conn.close()
+                    sg.popup("Enter an amount")
+                    continue
+                pay_date = values["pay_date"].strip() or datetime.now().strftime("%Y-%m-%d")
+                status = values["pay_status"] or "Paid"
+                pay_id = next_id("payments", "PAY")
+                c.execute("INSERT INTO payments (id, property_id, amount, date, status) VALUES (?, ?, ?, ?, ?)",
+                          (pay_id, prop_id, float(amount_val), pay_date, status))
+                if pending_due_ins_id:
+                    c.execute("""UPDATE payment_installments SET status='Paid', paid_date=? WHERE id=?""",
+                              (pay_date, pending_due_ins_id))
+                conn.commit()
+                conn.close()
+                if pending_due_ins_id:
+                    sg.popup("Payment completed! Installment marked as paid.")
+                    pending_due_ins_id = None
+                else:
+                    sg.popup(f"Payment {pay_id} recorded!")
+            else:
+                try:
+                    total = float(values["pay_total_amount"].replace("\u20b1", "").replace(",", "").strip())
+                    down = float(values["pay_down_payment"].replace("\u20b1", "").replace(",", "").strip())
+                    freq = values["pay_frequency"] or "12 Months"
+                    num = 6 if freq == "6 Months" else 12
+                    remaining = total - down
+                    installment_amount = round(remaining / num, 2)
+                    start_date = values["pay_start_date"].strip()
+                    plan_id = next_id("payment_plans", "PLN")
+                    c.execute("""INSERT INTO payment_plans (id, property_id, total_amount, down_payment, installment_amount, total_installments, frequency, start_date)
+                                 VALUES (?, ?, ?, ?, ?, ?, ?, ?)""",
+                              (plan_id, prop_id, total, down, installment_amount, num, freq, start_date))
+                    conn.commit()
+                    conn.close()
+                    create_installments(plan_id, prop_id, num, installment_amount, start_date, "Monthly")
+                    sg.popup(f"Payment plan {plan_id} created! {num} monthly installments of \u20b1{installment_amount:,.2f} each.")
+                except (ValueError, ZeroDivisionError):
+                    conn.close()
+                    sg.popup("Enter valid numbers for Total, Down Payment, and Start Date (YYYY-MM-DD).")
+                    continue
+            window["pay_property_id"].update("")
+            window["pay_amount"].update("\u20b1")
+            window["pay_date"].update("")
+            window["pay_status"].update("")
+            window["pay_total_amount"].update("\u20b1")
+            window["pay_down_payment"].update("\u20b1")
+            window["pay_start_date"].update("")
+            window["pay_frequency"].update("12 Months")
+            set_pay_mode("Select Mode")
+            refresh_due_alert()
+            if window["-DUE_WRAP-"].visible:
+                due_pay_cache = check_due_payments()
+                if due_pay_cache:
+                    display = [[r[0], r[1] or "", r[5] or "", r[2], r[3] or "", f"\u20b1{float(r[4]):,.2f}" if r[4] else "--", "Overdue"] for r in due_pay_cache]
+                    window["due_pay_results"].update(values=display, visible=True)
+                    window["-DUE_HEADER-"].update(visible=True)
+                else:
+                    window["-DUE_WRAP-"].update(visible=False)
+        elif isinstance(event, tuple) and event[0] == "pay_search_results":
+            if len(event) > 2 and event[2] is not None and isinstance(event[2], tuple) and event[2][0] is not None:
+                row_idx = event[2][0]
+                if row_idx < len(pay_search_cache):
+                    selected_pay = pay_search_cache[row_idx]
+                    window["-PAY_FORM_WRAP-"].update(visible=True)
+                    window["-PAY_HEADER-"].update(visible=True)
+                    window["-PAY_FIELDS-"].update(visible=True)
+                    set_pay_mode("Record Payment")
+                    window["pay_property_id"].update(selected_pay[1] or "")
+                    try:
+                        pay_amount_str = f"\u20b1{float(selected_pay[2]):,.2f}" if selected_pay[2] else "\u20b1"
+                    except (ValueError, TypeError):
+                        pay_amount_str = "\u20b1"
+                    window["pay_amount"].update(pay_amount_str)
+                    window["pay_date"].update(selected_pay[3] or "")
+                    window["pay_status"].update(selected_pay[4] or "")
         elif event == "View Payments":
-            conn = sqlite3.connect("primarius.db")
-            c = conn.cursor()
-            c.execute("SELECT * FROM payments")
-            rows = c.fetchall()
-            conn.close()
-            sg.popup_scrolled("Payments List", *[str(r) for r in rows])
-        elif event == "Setup Plan":
-            payment_plan_window()
+            pay_search_cache = search_payments("")
+            if pay_search_cache:
+                display = [[r[0], r[1] or "", f"\u20b1{float(r[2]):,.2f}" if r[2] else "--", r[3] or "", r[4] or ""] for r in pay_search_cache]
+                window["pay_search_results"].update(values=display, visible=True)
+            else:
+                window["pay_search_results"].update(values=[], visible=False)
+                sg.popup("No payments found.")
         elif event == "View Installments":
             installments_window()
+            refresh_due_alert()
+            if window["-DUE_WRAP-"].visible:
+                due_pay_cache = check_due_payments()
+                if due_pay_cache:
+                    display = [[r[0], r[1] or "", r[5] or "", r[2], r[3] or "", f"\u20b1{float(r[4]):,.2f}" if r[4] else "--", "Overdue"] for r in due_pay_cache]
+                    window["due_pay_results"].update(values=display, visible=True)
+                    window["-DUE_HEADER-"].update(visible=True)
+                else:
+                    window["-DUE_WRAP-"].update(visible=False)
         elif event == "Due Payments":
-            due = check_due_payments()
-            if due:
-                sg.popup_scrolled("DUE PAYMENTS", *[f"{r[0]} | {r[1]} | {r[5]} |  #{r[2]}  | Due: {r[3]}  |  \u20b1{r[4]:,.2f}" for r in due])
+            if window["-DUE_WRAP-"].visible:
+                window["-DUE_WRAP-"].update(visible=False)
             else:
-                sg.popup("No due payments!")
+                due_pay_cache = check_due_payments()
+                if due_pay_cache:
+                    display = [[r[0], r[1] or "", r[5] or "", r[2], r[3] or "", f"\u20b1{float(r[4]):,.2f}" if r[4] else "--", "Overdue"] for r in due_pay_cache]
+                    window["due_pay_results"].update(values=display, visible=True)
+                    window["-DUE_HEADER-"].update(visible=True)
+                    window["-DUE_WRAP-"].update(visible=True)
+                else:
+                    window["-DUE_WRAP-"].update(visible=False)
+                    sg.popup("No due payments!")
+        elif isinstance(event, tuple) and event[0] == "due_pay_results":
+            if len(event) > 2 and event[2] is not None and isinstance(event[2], tuple):
+                row_idx, col_idx = event[2][0], event[2][1]
+                if row_idx is None or row_idx < 0:
+                    pass
+                elif row_idx < len(due_pay_cache):
+                    sel = due_pay_cache[row_idx]
+                    pending_due_ins_id = sel[0]
+                    window["-PAY_FORM_WRAP-"].update(visible=True)
+                    window["-PAY_HEADER-"].update(visible=True)
+                    window["-PAY_FIELDS-"].update(visible=True)
+                    set_pay_mode("Record Payment")
+                    window["pay_property_id"].update(sel[6] or "")
+                    try:
+                        pay_amount_str = f"\u20b1{float(sel[4]):,.2f}" if sel[4] else "\u20b1"
+                    except (ValueError, TypeError):
+                        pay_amount_str = "\u20b1"
+                    window["pay_amount"].update(pay_amount_str)
+                    window["pay_date"].update(datetime.now().strftime("%Y-%m-%d"))
+                    window["pay_status"].update("Paid")
+                    window["save_pay_btn"].update("Save Payment")
         elif event == "Generate Report":
             conn = sqlite3.connect("primarius.db")
             c = conn.cursor()
