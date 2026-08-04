@@ -1,3 +1,4 @@
+## Sales Management System by Valkyrie Softworks (est. 2024) ##
 import sqlite3
 import PySimpleGUI as sg
 import hashlib
@@ -8,6 +9,7 @@ import io
 
 sg.theme("DarkBlue")
 
+# Generates the next available ID for a given table and prefix, considering deleted IDs
 def next_id(table, prefix):
     conn = sqlite3.connect("primarius.db")
     c = conn.cursor()
@@ -25,6 +27,7 @@ def next_id(table, prefix):
     conn.close()
     return f"{prefix}-{n:03d}"
 
+# Resizes uploaded photos for display in the GUI, maintaining aspect ratio and limiting dimensions
 def resize_image_for_display(img_bytes, max_w=240, max_h=240):
     try:
         img = Image.open(io.BytesIO(img_bytes))
@@ -36,6 +39,7 @@ def resize_image_for_display(img_bytes, max_w=240, max_h=240):
     img.save(buf, format="PNG")
     return buf.getvalue()
 
+# Search functions for properties and payments based on a keyword, returning matching rows from the database
 def search_properties(keyword):
     conn = sqlite3.connect("primarius.db")
     c = conn.cursor()
@@ -61,6 +65,7 @@ def search_payments(keyword):
     conn.close()
     return rows
 
+# Fetches property details by ID, returning a dictionary of property attributes or None if not found
 def get_property_by_id(prop_id):
     conn = sqlite3.connect("primarius.db")
     c = conn.cursor()
@@ -75,6 +80,7 @@ def get_property_by_id(prop_id):
         }
     return None
 
+#Formats contact number into +63 country code
 def format_contact(value):
     digits = "".join(c for c in value if c.isdigit())
     if digits.startswith("63") and len(digits) >= 12:
@@ -101,7 +107,7 @@ def sanitize_contact_input(value):
     if digits:
         return f"+63 {digits[:3]}-{digits[3:6]}-{digits[6:]}"
     return "+63 "
-
+# Layout for the property details popup, displaying property attributes and photos in a modal window
 def property_details_popup(prop):
     photo_col = []
     if prop["photo"]:
@@ -138,6 +144,7 @@ def property_details_popup(prop):
 
     sg.Window("Property Details", layout, size=(800, 600), resizable=False, element_justification='c', modal=True, finalize=True).read(close=True)
 
+# Main dashboard layout with tabs for properties, payments, and reports, including search and action buttons
 def create_dashboard_layout():
     prop_tab = sg.Tab("Properties", [
         [sg.Push(), sg.Button("See All Properties", button_color=(sg.theme_text_color(), sg.theme_background_color()), border_width=0, font=("Helvetica", 14)),
@@ -220,31 +227,55 @@ def create_dashboard_layout():
                  sg.Combo(["Select Mode", "Record Payment", "Setup Plan"], key="pay_mode", default_value="Select Mode", enable_events=True, font=("Helvetica", 12), size=(22,1), readonly=True, pad=(5, 6))],
                 [sg.Text("Property ID:", font=("Helvetica", 12), size=(12,1), pad=(0, 6)), sg.Input(key="pay_property_id", font=("Helvetica", 12), size=(25,1), pad=(5, 6))],
             ], visible=False, key="-PAY_FIELDS-")],
-            [sg.Column([
+            [sg.pin(sg.Column([
                 [sg.Text("Amount:", font=("Helvetica", 12), size=(12,1), pad=(0, 6)), sg.Input(key="pay_amount", default_text="\u20b1", font=("Helvetica", 12), size=(25,1), pad=(5, 6))],
-                [sg.Text("Date (YYYY-MM-DD):", font=("Helvetica", 12), size=(12,1), pad=(0, 6)), sg.Input(key="pay_date", font=("Helvetica", 12), size=(25,1), pad=(5, 6))],
+                [sg.Text("Date (YYYY-MM-DD):", font=("Helvetica", 12), size=(12,1), pad=(0, 6)), sg.Input(key="pay_date", font=("Helvetica", 12), size=(20,1), pad=(5, 6)),
+                 sg.CalendarButton("Pick Date", target="pay_date", format="%Y-%m-%d", font=("Helvetica", 12), button_color=(sg.theme_text_color(), sg.theme_background_color()), border_width=0, pad=(5, 6))],
                 [sg.Text("Status:", font=("Helvetica", 12), size=(12,1), pad=(0, 6)), sg.Combo(["Paid", "Pending", "Overdue"], key="pay_status", font=("Helvetica", 12), size=(22,1), readonly=True, pad=(5, 6))],
-            ], visible=False, key="-PAY_PAYMENT_FIELDS-")],
-            [sg.Column([
+            ], visible=False, key="-PAY_PAYMENT_FIELDS-"))],
+            [sg.pin(sg.Column([
                 [sg.Text("Total Amount:", font=("Helvetica", 12), size=(12,1), pad=(0, 6)), sg.Input(key="pay_total_amount", default_text="\u20b1", font=("Helvetica", 12), size=(25,1), pad=(5, 6))],
                 [sg.Text("Down Payment:", font=("Helvetica", 12), size=(12,1), pad=(0, 6)), sg.Input(key="pay_down_payment", default_text="\u20b1", font=("Helvetica", 12), size=(25,1), pad=(5, 6))],
                 [sg.Text("Frequency:", font=("Helvetica", 12), size=(12,1), pad=(0, 6)), sg.Combo(["6 Months", "12 Months"], key="pay_frequency", default_value="12 Months", font=("Helvetica", 12), size=(22,1), readonly=True, pad=(5, 6))],
-                [sg.Text("Start Date (YYYY-MM-DD):", font=("Helvetica", 12), size=(12,1), pad=(0, 6)), sg.Input(key="pay_start_date", font=("Helvetica", 12), size=(25,1), pad=(5, 6))],
-            ], visible=False, key="-PAY_PLAN_FIELDS-")],
+                [sg.Text("Start Date (YYYY-MM-DD):", font=("Helvetica", 12), size=(12,1), pad=(0, 6)), sg.Input(key="pay_start_date", font=("Helvetica", 12), size=(20,1), pad=(5, 6)),
+                 sg.CalendarButton("Pick Date", target="pay_start_date", format="%Y-%m-%d", font=("Helvetica", 12), button_color=(sg.theme_text_color(), sg.theme_background_color()), border_width=0, pad=(5, 6))],
+            ], visible=False, key="-PAY_PLAN_FIELDS-"))],
             [sg.Push(), sg.Button("Save Payment", key="save_pay_btn", button_color=(sg.theme_text_color(), sg.theme_background_color()), border_width=0, font=("Helvetica", 14)), sg.Push()],
         ], key="-PAY_FORM_WRAP-", expand_x=True, pad=(0,0)), expand_x=True)],
     ])
     rpt_tab = sg.Tab("Reports", [
-        [sg.Column([
-            [sg.Button("Generate Report", button_color=(sg.theme_text_color(), sg.theme_background_color()), border_width=0, font=("Helvetica", 20))],
-        ], vertical_alignment='top'),
-        sg.VerticalSeparator(),
-        sg.Column([
-            [sg.Text("Select Report Type:", font=("Helvetica", 20), size=(20,1))],
-            [sg.Combo(["Overdue Payments", "Payments by Client", "Payments by Property"], key="report_type", font=("Helvetica", 20), size=(25, 1))],
-            [sg.Text("", size=(1,1))],
-            [sg.Multiline(key="report_output", size=(65, 22), font=("Consolas", 11), disabled=True, autoscroll=True)],
-        ], vertical_alignment='top')],
+        [sg.Push(),
+         sg.Column([
+            [sg.Text("TOTAL SALES", font=("Helvetica", 12), text_color="gray", justification="center")],
+            [sg.Text("\u20b10.00", key="stat_sales", font=("Helvetica", 22, "bold"), justification="center")],
+         ], pad=(15, 15), element_justification="c"),
+         sg.Column([
+            [sg.Text("PAYMENTS", font=("Helvetica", 12), text_color="gray", justification="center")],
+            [sg.Text("0", key="stat_pay", font=("Helvetica", 22, "bold"), justification="center")],
+         ], pad=(15, 15), element_justification="c"),
+         sg.Column([
+            [sg.Text("OVERDUE", font=("Helvetica", 12), text_color="gray", justification="center")],
+            [sg.Text("0", key="stat_overdue", font=("Helvetica", 22, "bold"), justification="center")],
+         ], pad=(15, 15), element_justification="c"),
+         sg.Push()],
+        [sg.HorizontalSeparator()],
+        [sg.Text("Report Type:", font=("Helvetica", 16)),
+         sg.Combo(["Overdue Payments", "Payments by Client", "Payments by Property"], key="report_type", default_value="Overdue Payments", enable_events=True, font=("Helvetica", 16), size=(25, 1), readonly=True),
+         sg.Button("Generate Report", button_color=(sg.theme_text_color(), sg.theme_background_color()), border_width=0, font=("Helvetica", 16))],
+        [sg.pin(sg.Table(
+            values=[["", "", "", ""]],
+            headings=["Item", "Amount", "Date", "Payments"],
+            key="report_results",
+            font=("Helvetica", 12),
+            justification="left",
+            num_rows=12,
+            auto_size_columns=True,
+            visible=False,
+            enable_click_events=True,
+            expand_x=True
+        ), expand_x=True)],
+        [sg.pin(sg.Multiline(key="report_output", default_text="No report generated yet. Select a report type and click Generate Report.", size=(75, 8), font=("Consolas", 11), disabled=True, autoscroll=True), expand_x=True)],
+        [sg.Push(), sg.Button("Export Report", button_color=(sg.theme_text_color(), sg.theme_background_color()), border_width=0, font=("Helvetica", 14)), sg.Push()],
     ])
     return [
         [sg.Text("Sales Management System", font=("Helvetica", 20), justification="center")],
@@ -253,6 +284,7 @@ def create_dashboard_layout():
         [sg.Push(), sg.Button("Logout", button_color=(sg.theme_text_color(), sg.theme_background_color()), border_width=0, font=("Helvetica", 20)), sg.Push()],
     ]
 
+# Layout for the property management interface, allowing users to search, view, and update property details, including client information and photos
 def create_property_management_layout():
     return [
         [sg.Text("Manage Property", font=("Helvetica", 20), justification="center", pad=(0, (10, 15)))],
@@ -293,6 +325,7 @@ def create_property_management_layout():
          sg.Image(key="photo_display2", size=(200, 200), pad=(10, 5))],
     ]
 
+# Layout for the login interface
 def create_login_layout():
     return [
         [sg.Text("Primarius Realty Development", font=("Tahoma", 20), justification="center")],
@@ -305,6 +338,7 @@ def create_login_layout():
         [sg.Button("Exit", button_color=(sg.theme_text_color(), sg.theme_background_color()), border_width=0, font=("Tahoma", 20))]
     ]
 
+# Layout for the registration interface
 def create_registration_layout():
     return [
         [sg.Text("Sales Management System", font=("Helvetica", 20), justification="center")],
@@ -319,6 +353,7 @@ def create_registration_layout():
         ])],
     ]
 
+# Layout for the payment plan interface
 def create_payment_plan_layout():
     return [
         [sg.Text("Sales Management System", font=("Helvetica", 20), justification="center")],
@@ -336,12 +371,14 @@ def create_payment_plan_layout():
             [sg.Text("Total Amount", font=("Helvetica", 20), size=(20,1)), sg.Input(key="total_amount", font=("Helvetica", 20), size=(15,1))],
             [sg.Text("Down Payment", font=("Helvetica", 20), size=(20,1)), sg.Input(key="down_payment", font=("Helvetica", 20), size=(15,1))],
             [sg.Text("Frequency", font=("Helvetica", 20), size=(20,1)), sg.Combo(["6 Months", "12 Months"], key="frequency", font=("Helvetica", 20), size=(15,1))],
-            [sg.Text("Start Date (YY-MM-DD)", font=("Helvetica", 20), size=(20,1)), sg.Input(key="start_date", font=("Helvetica", 20), size=(15,1))],
+            [sg.Text("Start Date (YYYY-MM-DD)", font=("Helvetica", 20), size=(20,1)), sg.Input(key="start_date", font=("Helvetica", 20), size=(15,1)),
+             sg.CalendarButton("Pick Date", target="start_date", format="%Y-%m-%d", font=("Helvetica", 20), button_color=(sg.theme_text_color(), sg.theme_background_color()), border_width=0)],
             [sg.Text("", size=(1,1))],
             [sg.Text("", key="calc_result", font=("Helvetica", 16), text_color="yellow")],
         ])],
     ]
 
+# Layout for the installments interface
 def create_installments_layout():
     return [
         [sg.Text("Installments", font=("Helvetica", 20), justification="center", pad=(0, (10, 15)))],
@@ -373,6 +410,7 @@ def create_installments_layout():
         [sg.Push(), sg.Button("Record Payment", button_color=(sg.theme_text_color(), sg.theme_background_color()), border_width=0, font=("Helvetica", 14)), sg.Push()],
     ]
 
+# Database initialization
 def init_db():
     conn = sqlite3.connect("primarius.db")
     c = conn.cursor()
@@ -920,6 +958,10 @@ def dashboard():
     due_pay_cache = []
     pending_due_ins_id = None
     selected_prop_id = None
+    report_cache = []
+    report_sort_col = None
+    report_sort_asc = True
+    report_title = ""
     def set_pay_mode(mode):
         window["pay_mode"].update(mode)
         if mode == "Record Payment":
@@ -940,7 +982,41 @@ def dashboard():
             window["due_alert"].update(f"  {len(due)} due payment(s) \u2014 go to Payments tab")
         else:
             window["due_alert"].update("")
+    def refresh_report_stats():
+        conn = sqlite3.connect("primarius.db")
+        c = conn.cursor()
+        c.execute("SELECT COALESCE(SUM(amount), 0), COUNT(*) FROM payments")
+        total, count = c.fetchone()
+        conn.close()
+        window["stat_sales"].update(f"\u20b1{float(total or 0):,.2f}")
+        window["stat_pay"].update(str(count))
+        window["stat_overdue"].update(str(len(check_due_payments())))
+    def refresh_report_table():
+        nonlocal report_cache, report_sort_col, report_sort_asc, report_title
+        if not report_cache:
+            window["report_results"].update(values=[], visible=False)
+            window["report_output"].update("No report generated yet. Select a report type and click Generate Report.")
+            return
+        if report_sort_col is not None:
+            def key_fn(r):
+                v = r[report_sort_col]
+                if isinstance(v, (int, float)):
+                    return (0, 0 if v is None else v)
+                return (1, "" if v is None else str(v))
+            report_cache.sort(key=key_fn, reverse=not report_sort_asc)
+        display = [[r[0], f"\u20b1{float(r[1]):,.2f}" if r[1] is not None else "--", r[2] or "", str(r[3]) if r[3] else ""] for r in report_cache]
+        window["report_results"].update(values=display, visible=True)
+        window["report_output"].update(visible=False)
+        lines = [f"{report_title}  (generated {datetime.now().strftime('%Y-%m-%d %H:%M')})"]
+        lines.append("=" * 55)
+        lines.append(f"{'Item':<20}  {'Amount':>10}  {'Date':<12}  {'Payments':>8}")
+        lines.append("-" * 55)
+        for r in report_cache:
+            amt = f"\u20b1{float(r[1]):,.2f}" if r[1] is not None else "--"
+            lines.append(f"{str(r[0]):<20}  {amt:>10}  {str(r[2] or ''):<12}  {str(r[3] if r[3] else ''):>8}")
+        window["report_output"].update("\n".join(lines))
     refresh_due_alert()
+    refresh_report_stats()
     set_pay_mode("Select Mode")
     while True:
         event, values = window.read()
@@ -1213,27 +1289,14 @@ def dashboard():
             conn = sqlite3.connect("primarius.db")
             c = conn.cursor()
             report_type = values["report_type"]
-            output = ""
-            def fmt_date(d):
-                if not d:
-                    return "--:--:----"
-                parts = d.split("-")
-                if len(parts) == 3:
-                    return f"{parts[1]}:{parts[2]}:{parts[0]}"
-                return d
+            report_title = report_type
             if report_type == "Overdue Payments":
                 c.execute("""SELECT payments.date, properties.name, payments.amount
                              FROM payments
                              JOIN properties ON payments.property_id = properties.id
                              WHERE payments.status='Overdue'""")
                 rows = c.fetchall()
-                if rows:
-                    output = f"{'OVERDUE PAYMENTS':^55}\n"
-                    output += "="*55 + "\n\n"
-                    for r in rows:
-                        output += f"  [{fmt_date(r[0]):>12}]  {r[1]:<25}  \u20b1{r[2]:>8,.2f}\n"
-                else:
-                    output = "No overdue payments found."
+                report_cache = [[r[1] or "", r[2], r[0] or "", ""] for r in rows]
             elif report_type == "Payments by Client":
                 c.execute("""SELECT properties.client_name, SUM(payments.amount), MAX(payments.date), COUNT(payments.id)
                              FROM payments
@@ -1242,13 +1305,7 @@ def dashboard():
                              GROUP BY properties.client_name
                              ORDER BY SUM(payments.amount) DESC""")
                 rows = c.fetchall()
-                if rows:
-                    output = f"{'PAYMENTS BY CLIENT':^55}\n"
-                    output += "="*55 + "\n\n"
-                    for r in rows:
-                        output += f"  {r[0]:<20}  \u20b1{r[1]:>8,.2f}  [{fmt_date(r[2]):>12}]  {r[3]}\n"
-                else:
-                    output = "No payment data found."
+                report_cache = [[r[0] or "", r[1], r[2] or "", r[3]] for r in rows]
             elif report_type == "Payments by Property":
                 c.execute("""SELECT properties.location, SUM(payments.amount), MAX(payments.date), COUNT(payments.id)
                              FROM payments
@@ -1256,15 +1313,51 @@ def dashboard():
                              GROUP BY properties.location
                              ORDER BY SUM(payments.amount) DESC""")
                 rows = c.fetchall()
-                if rows:
-                    output = f"{'PAYMENTS BY PROPERTY':^55}\n"
-                    output += "="*55 + "\n\n"
-                    for r in rows:
-                        output += f"  {r[0]:<20}  \u20b1{r[1]:>8,.2f}  [{fmt_date(r[2]):>12}]  {r[3]}\n"
-                else:
-                    output = "No payment data found."
+                report_cache = [[r[0] or "", r[1], r[2] or "", r[3]] for r in rows]
             conn.close()
-            window["report_output"].update(output)
+            report_sort_col = None
+            report_sort_asc = True
+            refresh_report_table()
+        elif event == "report_type":
+            window["report_output"].update(visible=False)
+        elif isinstance(event, tuple) and event[0] == "report_results":
+            if len(event) > 2 and event[2] is not None and isinstance(event[2], tuple):
+                row_idx, col_idx = event[2][0], event[2][1]
+                if row_idx is None or row_idx < 0:
+                    if col_idx is not None and col_idx >= 0:
+                        if col_idx == report_sort_col:
+                            report_sort_asc = not report_sort_asc
+                        else:
+                            report_sort_col = col_idx
+                            report_sort_asc = True
+                        refresh_report_table()
+        elif event == "Export Report":
+            if not report_cache:
+                sg.popup("Generate a report first.")
+                continue
+            fname = sg.popup_get_file("Save report as...", save_as=True, default_extension=".xlsx",
+                                      file_types=(("Excel Files", "*.xlsx"), ("All Files", "*.*")))
+            if not fname:
+                continue
+            try:
+                from openpyxl import Workbook
+                wb = Workbook()
+                ws = wb.active
+                ws.title = "Report"
+                ws.append([values["report_type"], f"generated {datetime.now().strftime('%Y-%m-%d %H:%M')}"])
+                ws.append([])
+                ws.append(["Item", "Amount", "Date", "Payments"])
+                for r in report_cache:
+                    ws.append([r[0], r[1], r[2] or "", r[3] if r[3] else ""])
+                for col, width in zip("ABCD", [30, 15, 14, 10]):
+                    ws.column_dimensions[col].width = width
+                for row in ws.iter_rows(min_row=3, max_row=3):
+                    for cell in row:
+                        cell.font = cell.font.copy(bold=True)
+                wb.save(fname)
+                sg.popup("Report exported successfully!")
+            except Exception as e:
+                sg.popup(f"Export failed: {e}")
     window.close()
     login_window()
 
