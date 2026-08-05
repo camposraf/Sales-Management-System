@@ -329,15 +329,15 @@ def create_property_management_layout():
 def create_login_layout():
     card = [
         [sg.Text("Primarius Realty Development", font=("Helvetica", 22, "bold"), justification="center")],
-        [sg.Text("Sales Management System", font=("Helvetica", 13), text_color="gray", justification="center")],
+        [sg.Text("Sales Management System", font=("Helvetica", 13), text_color="white", justification="center")],
         [sg.HorizontalSeparator(pad=(0, 14))],
-        [sg.Text("Username", font=("Helvetica", 12), text_color="gray", pad=(0, (0, 4)))],
-        [sg.Input(key="username", font=("Helvetica", 14), size=(34, 1), pad=(0, (0, 12)), background_color="#335267")],
-        [sg.Text("Password", font=("Helvetica", 12), text_color="gray", pad=(0, (0, 4)))],
-        [sg.Input(key="password", password_char="*", font=("Helvetica", 14), size=(34, 1), pad=(0, (0, 16)), background_color="#335267")],
+        [sg.Text("Username", font=("Helvetica", 12), text_color="white", pad=(0, (0, 4)))],
+        [sg.Input(key="username", font=("Helvetica", 14), size=(34, 1), pad=(0, (0, 12)))],
+        [sg.Text("Password", font=("Helvetica", 12), text_color="white", pad=(0, (0, 4)))],
+        [sg.Input(key="password", password_char="*", font=("Helvetica", 14), size=(34, 1), pad=(0, (0, 16)))],
         [sg.Button("SIGN IN", key="Login", button_color=("white", "#2563eb"), border_width=0, font=("Helvetica", 14, "bold"), size=(36, 1), pad=(0, (0, 10)))],
         [sg.HorizontalSeparator(pad=(0, 12))],
-        [sg.Text("New to the system?", font=("Helvetica", 12), text_color="gray", justification="center")],
+        [sg.Text("New to the system?", font=("Helvetica", 12), text_color="white", justification="center")],
         [sg.Button("Create an Account", key="Register", button_color=(sg.theme_text_color(), sg.theme_background_color()), border_width=0, font=("Helvetica", 13), pad=(0, (4, 6)))],
         [sg.Push(), sg.Button("Exit", button_color=(sg.theme_text_color(), sg.theme_background_color()), border_width=0, font=("Helvetica", 13)), sg.Push()],
     ]
@@ -351,17 +351,17 @@ def create_login_layout():
 def create_registration_layout():
     card = [
         [sg.Text("Create Account", font=("Helvetica", 22, "bold"), justification="center")],
-        [sg.Text("Register to the Sales Management System", font=("Helvetica", 13), text_color="gray", justification="center")],
+        [sg.Text("Register to the Sales Management System", font=("Helvetica", 13), text_color="white", justification="center")],
         [sg.HorizontalSeparator(pad=(0, 14))],
-        [sg.Text("Username", font=("Helvetica", 12), text_color="gray", pad=(0, (0, 4)))],
-        [sg.Input(key="username", font=("Helvetica", 14), size=(34, 1), pad=(0, (0, 12)), background_color="#335267")],
-        [sg.Text("Password", font=("Helvetica", 12), text_color="gray", pad=(0, (0, 4)))],
-        [sg.Input(key="password", password_char="*", font=("Helvetica", 14), size=(34, 1), pad=(0, (0, 12)), background_color="#335267")],
-        [sg.Text("Confirm Password", font=("Helvetica", 12), text_color="gray", pad=(0, (0, 4)))],
-        [sg.Input(key="confirm_password", password_char="*", font=("Helvetica", 14), size=(34, 1), pad=(0, (0, 16)), background_color="#335267")],
+        [sg.Text("Username", font=("Helvetica", 12), text_color="white", pad=(0, (0, 4)))],
+        [sg.Input(key="username", font=("Helvetica", 14), size=(34, 1), pad=(0, (0, 12)))],
+        [sg.Text("Password", font=("Helvetica", 12), text_color="white", pad=(0, (0, 4)))],
+        [sg.Input(key="password", password_char="*", font=("Helvetica", 14), size=(34, 1), pad=(0, (0, 12)))],
+        [sg.Text("Confirm Password", font=("Helvetica", 12), text_color="white", pad=(0, (0, 4)))],
+        [sg.Input(key="confirm_password", password_char="*", font=("Helvetica", 14), size=(34, 1), pad=(0, (0, 16)))],
         [sg.Button("REGISTER", key="Register", button_color=("white", "#2563eb"), border_width=0, font=("Helvetica", 14, "bold"), size=(36, 1), pad=(0, (0, 10)))],
         [sg.HorizontalSeparator(pad=(0, 12))],
-        [sg.Text("Already have an account?", font=("Helvetica", 12), text_color="gray", justification="center")],
+        [sg.Text("Already have an account?", font=("Helvetica", 12), text_color="white", justification="center")],
         [sg.Button("Back to Login", key="Back", button_color=(sg.theme_text_color(), sg.theme_background_color()), border_width=0, font=("Helvetica", 13), pad=(0, (4, 6)))],
     ]
     return [
