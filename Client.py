@@ -267,14 +267,14 @@ def create_dashboard_layout():
             headings=["Item", "Amount", "Date", "Payments"],
             key="report_results",
             font=("Helvetica", 12),
-            justification="left",
+            justification="center",
             num_rows=12,
             auto_size_columns=True,
             visible=False,
             enable_click_events=True,
             expand_x=True
         ), expand_x=True)],
-        [sg.pin(sg.Multiline(key="report_output", default_text="No report generated yet. Select a report type and click Generate Report.", size=(75, 8), font=("Consolas", 11), disabled=True, autoscroll=True), expand_x=True)],
+        [sg.pin(sg.Multiline(key="report_output", default_text="No report generated yet. Select a report type and click Generate Report.", size=(150, 8), font=("Consolas", 11), disabled=True, autoscroll=True), expand_x=True)],
         [sg.Push(), sg.Button("Export Report", button_color=(sg.theme_text_color(), sg.theme_background_color()), border_width=0, font=("Helvetica", 14)), sg.Push()],
     ])
     return [
@@ -327,30 +327,47 @@ def create_property_management_layout():
 
 # Layout for the login interface
 def create_login_layout():
+    card = [
+        [sg.Text("Primarius Realty Development", font=("Helvetica", 22, "bold"), justification="center")],
+        [sg.Text("Sales Management System", font=("Helvetica", 13), text_color="gray", justification="center")],
+        [sg.HorizontalSeparator(pad=(0, 14))],
+        [sg.Text("Username", font=("Helvetica", 12), text_color="gray", pad=(0, (0, 4)))],
+        [sg.Input(key="username", font=("Helvetica", 14), size=(34, 1), pad=(0, (0, 12)), background_color="#335267")],
+        [sg.Text("Password", font=("Helvetica", 12), text_color="gray", pad=(0, (0, 4)))],
+        [sg.Input(key="password", password_char="*", font=("Helvetica", 14), size=(34, 1), pad=(0, (0, 16)), background_color="#335267")],
+        [sg.Button("SIGN IN", key="Login", button_color=("white", "#2563eb"), border_width=0, font=("Helvetica", 14, "bold"), size=(36, 1), pad=(0, (0, 10)))],
+        [sg.HorizontalSeparator(pad=(0, 12))],
+        [sg.Text("New to the system?", font=("Helvetica", 12), text_color="gray", justification="center")],
+        [sg.Button("Create an Account", key="Register", button_color=(sg.theme_text_color(), sg.theme_background_color()), border_width=0, font=("Helvetica", 13), pad=(0, (4, 6)))],
+        [sg.Push(), sg.Button("Exit", button_color=(sg.theme_text_color(), sg.theme_background_color()), border_width=0, font=("Helvetica", 13)), sg.Push()],
+    ]
     return [
-        [sg.Text("Primarius Realty Development", font=("Tahoma", 20), justification="center")],
-        [sg.Text("", size=(5,5))],
-        [sg.Text("Username:", font=("Tahoma", 20)), sg.Input(key="username", font=("Tahoma", 20), size=(20, 1))],
-        [sg.Text("Password:", font=("Tahoma", 20)), sg.Input(key="password", password_char="*", font=("Tahoma", 20), size=(20, 1))],
-        [sg.Text("", size=(1,1))],
-        [sg.Button("Login", button_color=(sg.theme_text_color(), sg.theme_background_color()), border_width=0, font=("Tahoma", 20))],
-        [sg.Button("Register", button_color=(sg.theme_text_color(), sg.theme_background_color()), border_width=0, font=("Tahoma", 20))],
-        [sg.Button("Exit", button_color=(sg.theme_text_color(), sg.theme_background_color()), border_width=0, font=("Tahoma", 20))]
+        [sg.Push(),
+         sg.Frame("", card, border_width=2, relief=sg.RELIEF_GROOVE, background_color="#22354a", element_justification="c", pad=(25, 25)),
+         sg.Push()],
     ]
 
 # Layout for the registration interface
 def create_registration_layout():
+    card = [
+        [sg.Text("Create Account", font=("Helvetica", 22, "bold"), justification="center")],
+        [sg.Text("Register to the Sales Management System", font=("Helvetica", 13), text_color="gray", justification="center")],
+        [sg.HorizontalSeparator(pad=(0, 14))],
+        [sg.Text("Username", font=("Helvetica", 12), text_color="gray", pad=(0, (0, 4)))],
+        [sg.Input(key="username", font=("Helvetica", 14), size=(34, 1), pad=(0, (0, 12)), background_color="#335267")],
+        [sg.Text("Password", font=("Helvetica", 12), text_color="gray", pad=(0, (0, 4)))],
+        [sg.Input(key="password", password_char="*", font=("Helvetica", 14), size=(34, 1), pad=(0, (0, 12)), background_color="#335267")],
+        [sg.Text("Confirm Password", font=("Helvetica", 12), text_color="gray", pad=(0, (0, 4)))],
+        [sg.Input(key="confirm_password", password_char="*", font=("Helvetica", 14), size=(34, 1), pad=(0, (0, 16)), background_color="#335267")],
+        [sg.Button("REGISTER", key="Register", button_color=("white", "#2563eb"), border_width=0, font=("Helvetica", 14, "bold"), size=(36, 1), pad=(0, (0, 10)))],
+        [sg.HorizontalSeparator(pad=(0, 12))],
+        [sg.Text("Already have an account?", font=("Helvetica", 12), text_color="gray", justification="center")],
+        [sg.Button("Back to Login", key="Back", button_color=(sg.theme_text_color(), sg.theme_background_color()), border_width=0, font=("Helvetica", 13), pad=(0, (4, 6)))],
+    ]
     return [
-        [sg.Text("Sales Management System", font=("Helvetica", 20), justification="center")],
-        [sg.Text("", size=(2,2))],
-        [sg.Column([
-            [sg.Button("Register", button_color=(sg.theme_text_color(), sg.theme_background_color()), border_width=0, font=("Helvetica", 20))],
-        ]),
-        sg.VerticalSeparator(),
-        sg.Column([
-            [sg.Text("Username:", font=("Helvetica", 20), size=(12,1)), sg.Input(key="username", font=("Helvetica", 20), size=(20, 1))],
-            [sg.Text("Password:", font=("Helvetica", 20), size=(12,1)), sg.Input(key="password", password_char="*", font=("Helvetica", 20), size=(20, 1))],
-        ])],
+        [sg.Push(),
+         sg.Frame("", card, border_width=2, relief=sg.RELIEF_GROOVE, background_color="#22354a", element_justification="c", pad=(25, 25)),
+         sg.Push()],
     ]
 
 # Layout for the payment plan interface
@@ -536,12 +553,18 @@ def create_installments(plan_id, property_id, total_installments, installment_am
     conn.close()
 
 def register_window():
-    window = sg.Window("Register", create_registration_layout(), resizable=True, element_justification='c', size=(550, 350))
+    window = sg.Window("Register", create_registration_layout(), resizable=True, element_justification='c', size=(520, 540))
     while True:
         event, values = window.read()
-        if event in (sg.WIN_CLOSED,):
+        if event in (sg.WIN_CLOSED, "Back"):
             break
         if event == "Register":
+            if values["password"] != values["confirm_password"]:
+                sg.popup("Passwords do not match. Please try again.")
+                continue
+            if not values["username"].strip() or not values["password"]:
+                sg.popup("Username and password are required.")
+                continue
             conn = sqlite3.connect("primarius.db")
             c = conn.cursor()
             try:
@@ -556,6 +579,7 @@ def register_window():
             finally:
                 conn.close()
     window.close()
+
 
 def payment_plan_window():
     window = sg.Window("Payment Plan", create_payment_plan_layout(), resizable=True, element_justification='c', size=(750, 520))
@@ -716,7 +740,7 @@ def installments_window():
     window.close()
 
 def login_window():
-    window = sg.Window("Login", create_login_layout(), resizable=True, element_justification='c', size=(550, 450))
+    window = sg.Window("Login", create_login_layout(), resizable=True, element_justification='c', size=(520, 500))
     while True:
         event, values = window.read()
         if event in (sg.WIN_CLOSED, "Exit"):
