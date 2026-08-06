@@ -530,6 +530,7 @@ def login(email, password):
     conn.close()
     return result
 
+# Check due payments 
 def check_due_payments():
     conn = sqlite3.connect("primarius.db")
     c = conn.cursor()
@@ -542,6 +543,7 @@ def check_due_payments():
     conn.close()
     return due
 
+# Create installments for a payment plan
 def create_installments(plan_id, property_id, total_installments, installment_amount, start_date, frequency):
     conn = sqlite3.connect("primarius.db")
     c = conn.cursor()
@@ -564,6 +566,7 @@ def create_installments(plan_id, property_id, total_installments, installment_am
     conn.commit()
     conn.close()
 
+# User registration window
 def register_window():
     window = sg.Window("Register", create_registration_layout(), resizable=True, element_justification='c', size=(520, 540))
     while True:
@@ -596,7 +599,7 @@ def register_window():
                 conn.close()
     window.close()
 
-
+# Payment plan creation window
 def payment_plan_window():
     window = sg.Window("Payment Plan", create_payment_plan_layout(), resizable=True, element_justification='c', size=(750, 520))
     while True:
@@ -641,6 +644,7 @@ def payment_plan_window():
                 sg.popup(f"Error: {e}")
     window.close()
 
+# Installments management window
 def installments_window():
     window = sg.Window("Installments", create_installments_layout(), resizable=True, element_justification='c', size=(900, 600), finalize=True)
     ins_cache = []
@@ -755,6 +759,7 @@ def installments_window():
                     sg.popup(f"Error: {e}")
     window.close()
 
+# User login window
 def login_window():
     window = sg.Window("Login", create_login_layout(), resizable=True, element_justification='c', size=(520, 500))
     while True:
@@ -782,6 +787,7 @@ def login_window():
                 sg.popup("Invalid credentials")
     window.close()
 
+# Manage properties window
 def manage_properties_window(prop_id=None):
     window = sg.Window("Manage Property", create_property_management_layout(), resizable=False, element_justification='c', size=(950, 750), finalize=True)
     prop_search_cache = []
@@ -907,6 +913,7 @@ def manage_properties_window(prop_id=None):
                     sg.popup(f"Error loading photo: {e}")
     window.close()
 
+# Add property window
 def create_add_property_layout():
     return [
         [sg.Text("Add Property", font=("Helvetica", 20), justification="center")],
@@ -932,6 +939,7 @@ def create_add_property_layout():
         
     ]
 
+# Add property window function
 def add_property_window():
     window = sg.Window("Add Property", create_add_property_layout(), resizable=False, element_justification='c', size=(900, 650), finalize=True)
     current_photo = None
@@ -991,6 +999,7 @@ def add_property_window():
             window["photo_display2"].update(data=None)
     window.close()
 
+# Main dashboard window
 def dashboard():
     window = sg.Window("Sales Management System", create_dashboard_layout(), resizable=False, element_justification='c', size=(1150, 750), finalize=True)
     search_results = []
@@ -1401,6 +1410,7 @@ def dashboard():
     window.close()
     login_window()
 
+# Initialize database and start the application
 if __name__ == "__main__":
     init_db()
     login_window()
