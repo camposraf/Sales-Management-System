@@ -6,6 +6,7 @@ from datetime import datetime
 import calendar
 from PIL import Image
 import io
+import re
 
 sg.theme("DarkBlue")
 
@@ -107,6 +108,7 @@ def sanitize_contact_input(value):
     if digits:
         return f"+63 {digits[:3]}-{digits[3:6]}-{digits[6:]}"
     return "+63 "
+
 # Layout for the property details popup, displaying property attributes and photos in a modal window
 def property_details_popup(prop):
     photo_col = []
@@ -331,8 +333,8 @@ def create_login_layout():
         [sg.Text("Primarius Realty Development", font=("Helvetica", 22, "bold"), justification="center")],
         [sg.Text("Sales Management System", font=("Helvetica", 13), text_color="white", justification="center")],
         [sg.HorizontalSeparator(pad=(0, 14))],
-        [sg.Text("Username", font=("Helvetica", 12), text_color="white", pad=(0, (0, 4)))],
-        [sg.Input(key="username", font=("Helvetica", 14), size=(34, 1), pad=(0, (0, 12)))],
+        [sg.Text("Email", font=("Helvetica", 12), text_color="white", pad=(0, (0, 4)))],
+        [sg.Input(key="email", font=("Helvetica", 14), size=(34, 1), pad=(0, (0, 12)))],
         [sg.Text("Password", font=("Helvetica", 12), text_color="white", pad=(0, (0, 4)))],
         [sg.Input(key="password", password_char="*", font=("Helvetica", 14), size=(34, 1), pad=(0, (0, 16)))],
         [sg.Button("SIGN IN", key="Login", button_color=("white", "#2563eb"), border_width=0, font=("Helvetica", 14, "bold"), size=(36, 1), pad=(0, (0, 10)))],
@@ -343,7 +345,7 @@ def create_login_layout():
     ]
     return [
         [sg.Push(),
-         sg.Frame("", card, border_width=2, relief=sg.RELIEF_GROOVE, background_color="#22354a", element_justification="c", pad=(25, 25)),
+         sg.Frame("", card, border_width=2, relief=sg.RELIEF_GROOVE, element_justification="c", pad=(25, 25)),
          sg.Push()],
     ]
 
@@ -353,8 +355,8 @@ def create_registration_layout():
         [sg.Text("Create Account", font=("Helvetica", 22, "bold"), justification="center")],
         [sg.Text("Register to the Sales Management System", font=("Helvetica", 13), text_color="white", justification="center")],
         [sg.HorizontalSeparator(pad=(0, 14))],
-        [sg.Text("Username", font=("Helvetica", 12), text_color="white", pad=(0, (0, 4)))],
-        [sg.Input(key="username", font=("Helvetica", 14), size=(34, 1), pad=(0, (0, 12)))],
+        [sg.Text("Email", font=("Helvetica", 12), text_color="white", pad=(0, (0, 4)))],
+        [sg.Input(key="email", font=("Helvetica", 14), size=(34, 1), pad=(0, (0, 12)))],
         [sg.Text("Password", font=("Helvetica", 12), text_color="white", pad=(0, (0, 4)))],
         [sg.Input(key="password", password_char="*", font=("Helvetica", 14), size=(34, 1), pad=(0, (0, 12)))],
         [sg.Text("Confirm Password", font=("Helvetica", 12), text_color="white", pad=(0, (0, 4)))],
@@ -366,7 +368,7 @@ def create_registration_layout():
     ]
     return [
         [sg.Push(),
-         sg.Frame("", card, border_width=2, relief=sg.RELIEF_GROOVE, background_color="#22354a", element_justification="c", pad=(25, 25)),
+         sg.Frame("", card, border_width=2, relief=sg.RELIEF_GROOVE, element_justification="c", pad=(25, 25)),
          sg.Push()],
     ]
 
@@ -436,9 +438,15 @@ def init_db():
               password TEXT,
               first_login INTEGER DEFAULT 1)""")
     c.execute("""CREATE TABLE IF NOT EXISTS employees(id INTEGER PRIMARY KEY AUTOINCREMENT,
-              username TEXT UNIQUE,
+              email TEXT UNIQUE,
               password TEXT,
               role TEXT)""")
+    try:
+        em_cols = [r[1] for r in c.execute("PRAGMA table_info(employees)").fetchall()]
+        if "username" in em_cols and "email" not in em_cols:
+                c.execute("ALTER TABLE employees RENAME COLUMN username TO email")
+    except sqlite3.OperationalError:
+        pass
     try:
         c.execute("ALTER TABLE employees ADD COLUMN first_login INTEGER DEFAULT 1")
     except sqlite3.OperationalError:
@@ -506,14 +514,18 @@ def init_db():
     conn.commit()
     conn.close()
 
+# Password hashing and user authentication
 def hash_password(password):
     return hashlib.sha256(password.encode()).hexdigest()
 
-def login(username, password):
+def is_valid_email(email):
+    return re.match(r"^[^@\s]+@[^@\s]+\.[^@\s]+$", email) is not None
+
+def login(email, password):
     conn = sqlite3.connect("primarius.db")
     c = conn.cursor()
-    c.execute("SELECT * FROM employees WHERE username=? AND password=?",
-              (username, hash_password(password)))
+    c.execute("SELECT * FROM employees WHERE email=? AND password=?",
+              (email, hash_password(password)))
     result = c.fetchone()
     conn.close()
     return result
@@ -559,23 +571,27 @@ def register_window():
         if event in (sg.WIN_CLOSED, "Back"):
             break
         if event == "Register":
+            email_val = values["email"].strip()
+            if not is_valid_email(email_val):
+                sg.popup("Please enter a valid email address.")
+                continue
+            if not values["password"]:
+                sg.popup("Password is required.")
+                continue
             if values["password"] != values["confirm_password"]:
                 sg.popup("Passwords do not match. Please try again.")
-                continue
-            if not values["username"].strip() or not values["password"]:
-                sg.popup("Username and password are required.")
                 continue
             conn = sqlite3.connect("primarius.db")
             c = conn.cursor()
             try:
-                c.execute("INSERT INTO employees (username, password) VALUES (?, ?)",
-                          (values["username"], hash_password(values["password"])))
+                c.execute("INSERT INTO employees (email, password) VALUES (?, ?)",
+                          (email_val, hash_password(values["password"])))
                 conn.commit()
                 sg.popup("Registration successful! Please log in.")
                 window.close()
                 break
             except sqlite3.IntegrityError:
-                sg.popup("Username already exists. Please choose a different username.")
+                sg.popup("Email already registered. Please use a different email address.")
             finally:
                 conn.close()
     window.close()
@@ -748,7 +764,7 @@ def login_window():
         if event == "Register":
             register_window()
         if event == "Login":
-            user = login(values["username"], values["password"])
+            user = login(values["email"].strip(), values["password"])
             if user:
                 conn = sqlite3.connect("primarius.db")
                 c = conn.cursor()
