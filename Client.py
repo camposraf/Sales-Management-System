@@ -7,8 +7,13 @@ import calendar
 from PIL import Image
 import io
 import re
+import os
 
 sg.theme("DarkBlue")
+
+# Custom icon for the application window
+if os.path.exists("client.ico"):
+    sg.set_global_icon(icon="client.ico")
 
 # Generates the next available ID for a given table and prefix, considering deleted IDs
 def next_id(table, prefix):
@@ -568,7 +573,7 @@ def create_installments(plan_id, property_id, total_installments, installment_am
 
 # User registration window
 def register_window():
-    window = sg.Window("Register", create_registration_layout(), resizable=True, element_justification='c', size=(520, 540))
+    window = sg.Window("Primarius Realty Development", create_registration_layout(), resizable=True, element_justification='c', size=(520, 540))
     while True:
         event, values = window.read()
         if event in (sg.WIN_CLOSED, "Back"):
@@ -761,7 +766,7 @@ def installments_window():
 
 # User login window
 def login_window():
-    window = sg.Window("Login", create_login_layout(), resizable=True, element_justification='c', size=(520, 500))
+    window = sg.Window("Primarius Realty Development", create_login_layout(), resizable=True, element_justification='c', size=(520, 500))
     while True:
         event, values = window.read()
         if event in (sg.WIN_CLOSED, "Exit"):
@@ -1001,7 +1006,7 @@ def add_property_window():
 
 # Main dashboard window
 def dashboard():
-    window = sg.Window("Sales Management System", create_dashboard_layout(), resizable=False, element_justification='c', size=(1150, 750), finalize=True)
+    window = sg.Window("Primarius Realty Development", create_dashboard_layout(), resizable=False, element_justification='c', size=(1150, 750), finalize=True)
     search_results = []
     pay_search_cache = []
     due_pay_cache = []
