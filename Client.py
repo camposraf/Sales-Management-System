@@ -12,8 +12,8 @@ import os
 sg.theme("DarkBlue")
 
 # Custom icon for the application window
-if os.path.exists("client.ico"):
-    sg.set_global_icon(icon="client.ico")
+if os.path.exists("G:\Sales Management System\client.ico"):
+    sg.set_global_icon(icon="G:\Sales Management System\client.ico")
 
 # Generates the next available ID for a given table and prefix, considering deleted IDs
 def next_id(table, prefix):
